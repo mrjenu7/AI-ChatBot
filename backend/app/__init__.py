@@ -1,0 +1,1 @@
+"""CareerPath backend application."""
