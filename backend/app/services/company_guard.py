@@ -44,22 +44,11 @@ def is_other_vision_brand(message: str) -> bool:
     return any(not _OFFICIAL.fullmatch(m.group()) for m in _SIMILAR.finditer(message))
 
 
-def refusal(profile: Dict[str, Any]) -> str:
-    code, style = str(profile.get("code") or "en"), str(profile.get("style") or "native")
-    if code == "gu":
-        return ("Hu fakt We3vision Private Limited ane teni services vishe j mahiti aapi shaku chhu."
-                if style != "native" else "હું ફક્ત We3vision Private Limited અને તેની સેવાઓ વિશે જ માહિતી આપી શકું છું.")
-    if code == "hi":
-        return ("Main sirf We3vision Private Limited aur uski services ke baare mein jaankari de sakta hoon."
-                if style != "native" else "मैं केवल We3vision Private Limited और उसकी सेवाओं के बारे में जानकारी दे सकता हूँ।")
+def refusal(profile: Dict[str, Any] | None = None) -> str:
     return "I can only provide information about We3vision Private Limited and its services."
 
 
-def clarification(profile: Dict[str, Any]) -> str:
-    if profile.get("code") == "gu":
-        return "શું તમે We3vision Private Limited અથવા તેની સેવાઓ વિશે પૂછો છો?"
-    if profile.get("code") == "hi":
-        return "क्या आप We3vision Private Limited या उसकी सेवाओं के बारे में पूछ रहे हैं?"
+def clarification(profile: Dict[str, Any] | None = None) -> str:
     return "Are you asking about We3vision Private Limited or its services?"
 
 
@@ -125,7 +114,7 @@ async def classify_scope(message: str, history: Optional[List[Dict[str, str]]] =
         response = await _get_client().chat.completions.create(
             model=settings.llm_model,
             temperature=0,
-            max_tokens=35,
+            max_tokens=256,
             messages=[
                 {"role": "system", "content": (
                     "Classify the latest message for We3vision's official business assistant. "

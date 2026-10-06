@@ -45,17 +45,17 @@ async def generate_reply(messages: List[Dict[str, str]]) -> str:
         prompt = (
             f"{settings.system_prompt}\n\n"
             f"RESPONSE LANGUAGE CONTRACT: {language_contract(profile)}\n"
-            "The latest user message decides the response language. Translate English knowledge-base facts "
-            "into that language instead of replying in English.\n\n"
+            "Understand the user's message in whatever language they use, but always answer ONLY in English. "
+            "Do not reply in the user's language if it is not English. All explanations, greetings, and answers must be in English.\n\n"
             "=== VERIFIED WE3VISION COMPANY KNOWLEDGE BASE ===\n"
             f"{rag_context}\n"
             "=================================================\n"
             "STRICT DOMAIN BOUNDARY:\n"
             "1. Answer ONLY questions related to We3vision Private Limited or polite greetings.\n"
             "2. If the user asks about anything unrelated to We3vision (such as general knowledge, sports, celebrities, math, non-company coding, etc.), "
-            "DO NOT answer it. Politely decline in the required response language, explaining that you are dedicated exclusively to We3vision questions.\n"
-            "3. Use only approved company facts. If a company-specific fact is unavailable, say so in the "
-            "required language and offer info@we3vision.com / +91 7383216096."
+            "DO NOT answer it. Politely decline in English, explaining that you are dedicated exclusively to We3vision questions.\n"
+            "3. Use only approved company facts. If a company-specific fact is unavailable, say so in English "
+            "and offer info@we3vision.com / +91 7383216096."
         )
         client = _get_client()
         response = await client.chat.completions.create(

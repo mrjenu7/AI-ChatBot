@@ -1,9 +1,8 @@
-"""Language detection and response-language enforcement utilities.
+"""Language detection and English-only response enforcement utilities.
 
-The business agent's language contract is driven by the *latest user message*.
-Gujarati/Hindi script is detected deterministically.  Latin-script Gujlish and
-Hinglish are handled with conversational indicators, and ``langid`` is used as
-an optional broad-language fallback for other languages.
+The business agent understands user messages in any language (Gujarati, Hindi,
+Spanish, French, etc.), but strictly enforces that the AI response is always
+and exclusively delivered in English.
 """
 from __future__ import annotations
 
@@ -210,92 +209,61 @@ def detect_language_profile(text: str) -> Dict[str, Any]:
     }
 
 
-def language_contract(profile: Dict[str, Any]) -> str:
-    """Create a strict prompt instruction for the requested response language."""
+def language_contract(profile: Dict[str, Any] | None = None) -> str:
+    """Create a strict prompt instruction enforcing English-only answers while understanding user input language."""
+    profile = profile or {}
     code = str(profile.get("code") or "en")
-    style = str(profile.get("style") or "native")
     name = str(profile.get("name") or LANGUAGE_NAMES.get(code, code.upper()))
 
-    if code == "gu" and style == "native":
+    if code != "en":
         return (
-            "Write the COMPLETE answer in natural, conversational Gujarati using Gujarati script. "
-            "Do not answer in English or Hindi. English may appear only for unavoidable brand names, "
-            "technical product names, email addresses, URLs, phone numbers, or code. Translate all "
-            "normal explanatory sentences into Gujarati."
+            f"The user's message is written in {name}. You must fully understand the user's message, intent, and context, "
+            "but you must write the COMPLETE answer strictly and exclusively in clear, professional English. "
+            f"Do not respond in {name} or any other non-English language under any circumstances. "
+            "All explanatory sentences, greetings, and company details must be delivered in English only."
         )
-    if code == "hi" and style == "native":
-        return (
-            "Write the COMPLETE answer in natural, conversational Hindi using Devanagari script. "
-            "Do not answer in English or Gujarati. English may appear only for unavoidable brand names, "
-            "technical product names, email addresses, URLs, phone numbers, or code. Translate all "
-            "normal explanatory sentences into Hindi."
-        )
-    if code == "gu" and style == "latin":
-        return (
-            "Reply in Gujarati written in Latin letters (Gujlish), matching the user's transliterated style. "
-            "Do not switch to Gujarati script and do not turn the answer into standard English."
-        )
-    if code == "hi" and style == "latin":
-        return (
-            "Reply in Hindi written in Latin letters (Hinglish), matching the user's transliterated style. "
-            "Do not switch to Devanagari and do not turn the answer into standard English."
-        )
-    if code == "en":
-        return "Write the complete answer in English only."
 
-    return (
-        f"Write the complete answer in {name}. The latest user message is in {name}; do not switch to English. "
-        "Keep only unavoidable names, URLs, email addresses, phone numbers, code, and technical identifiers unchanged."
-    )
+    return "Write the complete answer strictly and exclusively in English only."
 
 
-def response_matches_language(reply: str, profile: Dict[str, Any]) -> bool:
-    """Best-effort guard used before a response is returned to the frontend."""
+def response_matches_language(reply: str, profile: Dict[str, Any] | None = None) -> bool:
+    """Best-effort guard verifying that the response is strictly in English."""
     text = (reply or "").strip()
     if not text:
         return False
 
-    code = str(profile.get("code") or "en")
-    style = str(profile.get("style") or "native")
+    # The AI must answer only in English. Any non-English scripts are strictly rejected.
+    non_english_script_ranges = (
+        (0x0A80, 0x0AFF),  # Gujarati
+        (0x0900, 0x097F),  # Devanagari (Hindi, Marathi, Nepali)
+        (0x0600, 0x06FF),  # Arabic / Urdu / Persian
+        (0x0980, 0x09FF),  # Bengali
+        (0x0A00, 0x0A7F),  # Gurmukhi / Punjabi
+        (0x0B80, 0x0BFF),  # Tamil
+        (0x0C00, 0x0C7F),  # Telugu
+        (0x0C80, 0x0CFF),  # Kannada
+        (0x0D00, 0x0D7F),  # Malayalam
+        (0x0400, 0x04FF),  # Cyrillic
+        (0x3040, 0x30FF),  # Japanese Hiragana / Katakana
+        (0xAC00, 0xD7AF),  # Korean Hangul
+        (0x4E00, 0x9FFF),  # Chinese Hanzi
+    )
+    for start, end in non_english_script_ranges:
+        if _script_count(text, start, end) >= 2:
+            return False
 
-    if code == "gu" and style == "native":
-        gu = _script_count(text, 0x0A80, 0x0AFF)
-        devanagari = _script_count(text, 0x0900, 0x097F)
-        latin = sum(ch.isascii() and ch.isalpha() for ch in text)
-        # Gujarati must be the real explanatory language, not just a short greeting
-        # wrapped around an otherwise English answer. Technical names may stay Latin.
-        return gu >= 3 and gu > devanagari and (latin <= 12 or gu >= latin * 0.35)
-    if code == "hi" and style == "native":
-        dev = _script_count(text, 0x0900, 0x097F)
-        gu = _script_count(text, 0x0A80, 0x0AFF)
-        latin = sum(ch.isascii() and ch.isalpha() for ch in text)
-        return dev >= 3 and dev > gu and (latin <= 12 or dev >= latin * 0.35)
-    if code == "en":
-        return _script_count(text, 0x0A80, 0x0AFF) == 0 and _script_count(text, 0x0900, 0x097F) == 0
-    if code == "gu" and style == "latin":
-        return _script_count(text, 0x0A80, 0x0AFF) == 0
-    if code == "hi" and style == "latin":
-        return _script_count(text, 0x0900, 0x097F) == 0
-
-    if langid is not None and len(text) >= 20:
+    if langid is not None and len(text) >= 40:
         try:
             detected, _ = langid.classify(text)
-            return detected == code
+            if detected not in {"en", "la"} and detected in {
+                "gu", "hi", "mr", "es", "fr", "de", "it", "pt", "nl", "ru", "uk", "ar", "ur", "bn", "pa", "ta", "te", "kn", "ml", "ne", "ja", "ko", "zh"
+            }:
+                return False
         except Exception:
             pass
+
     return True
 
 
-def localized_connection_error(profile: Dict[str, Any]) -> str:
-    code = str(profile.get("code") or "en")
-    style = str(profile.get("style") or "native")
-
-    if code == "gu" and style == "native":
-        return "માફ કરશો, હમણાં AI સેવામાં કનેક્શનની સમસ્યા છે. કૃપા કરીને થોડીવાર પછી ફરી પ્રયાસ કરો."
-    if code == "hi" and style == "native":
-        return "क्षमा करें, अभी AI सेवा से कनेक्शन में समस्या है। कृपया थोड़ी देर बाद फिर प्रयास करें।"
-    if code == "gu" and style == "latin":
-        return "Maaf karsho, hamna AI service sathe connection ma samasya chhe. Krupya thodi vaar pachhi fari prayas karo."
-    if code == "hi" and style == "latin":
-        return "Maaf kijiye, abhi AI service se connection mein samasya hai. Kripya thodi der baad phir koshish karein."
+def localized_connection_error(profile: Dict[str, Any] | None = None) -> str:
     return "Sorry, the AI service is temporarily unavailable. Please try again in a moment."

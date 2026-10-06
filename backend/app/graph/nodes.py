@@ -4,10 +4,7 @@ from typing import Any, Dict, List
 
 from app.core.config import settings
 from app.graph.state import AgentState
-from app.services.google_sheets_storage import (
-    append_turn,
-    load_today_chat,
-)
+from app.services.supabase_service import append_turn, load_conversation
 from app.services.language_service import (
     detect_language_profile,
     language_contract,
@@ -53,26 +50,26 @@ async def load_history_node(
 ) -> Dict[str, Any]:
     """
     Load conversation history for the current session
-    from Google Sheets.
+    from Supabase.
     """
 
     user_id = state.get(
         "user_id",
-        "guest_user",
+        "",
     )
 
     session_id = state.get("session_id")
 
     try:
         today_chat = await asyncio.to_thread(
-            load_today_chat,
+            load_conversation,
             user_id,
             session_id,
         )
 
     except Exception as error:
         print(
-            f"[Google Sheets Load Error]: {error}"
+            f"[Supabase Load Error]: {error}"
         )
 
         today_chat = []
@@ -175,8 +172,8 @@ async def _repair_language(
     language_profile: Dict[str, Any],
 ) -> str:
     """
-    Rewrite the assistant response if it was generated
-    in the wrong language.
+    Rewrite the assistant response into clear, natural English
+    if it was generated in a non-English language.
 
     The facts must remain unchanged.
     """
@@ -190,10 +187,10 @@ async def _repair_language(
             "role": "system",
             "content": (
                 "You are a language-compliance editor. "
-                "Rewrite the previous assistant answer in the "
-                "required language. Do not add, remove, invent, "
-                "or change any facts. Do not explain what you "
-                "changed. Return only the corrected answer.\n\n"
+                "Rewrite the previous assistant answer strictly into clear, natural English. "
+                "Do not answer in Gujarati, Hindi, or any other non-English language. "
+                "Do not add, remove, invent, or change any facts. "
+                "Do not explain what you changed. Return only the corrected English answer.\n\n"
                 f"{contract}"
             ),
         },
@@ -204,7 +201,7 @@ async def _repair_language(
                 f"{original_user_message}\n\n"
                 "Previous assistant answer:\n"
                 f"{previous_reply}\n\n"
-                "Return only the corrected answer."
+                "Return only the corrected English answer."
             ),
         },
     ]
@@ -267,11 +264,10 @@ async def generate_response_node(
 
         "=== RESPONSE LANGUAGE CONTRACT ===\n"
         f"{contract}\n"
-        "Determine the response language only from the latest "
-        "user message. Do not copy the language of previous "
-        "conversation messages. If the knowledge-base content "
-        "is written in English, translate the facts into the "
-        "required response language.\n"
+        "Understand the user's message in whatever language they use, "
+        "but always answer strictly and exclusively in English. "
+        "Never reply in any non-English language. All facts, greetings, and "
+        "explanations must be provided in English only.\n"
         "==================================\n\n"
 
         "=== VERIFIED WE3VISION KNOWLEDGE BASE ===\n"
@@ -285,18 +281,18 @@ async def generate_response_node(
         "2. STRICT OUT-OF-SCOPE REFUSAL: If the user asks about ANY topic unrelated to We3vision "
         "(such as general knowledge, history, celebrities, sports, politics, weather, recipes, personal advice, "
         "general math, non-company coding tutorials, or other businesses), DO NOT ANSWER OR PROVIDE THAT INFORMATION. "
-        "Politely decline the request in the REQUIRED response language, explaining that you can only answer questions "
+        "Politely decline the request in English, explaining that you can only answer questions "
         "about We3vision and its services. Invite them to ask about We3vision or provide contact details: "
         "info@we3vision.com / +91 7383216096.\n"
         "3. Use only approved information from the knowledge base for company-specific claims.\n"
         "4. Never invent company prices, policies, vacancies, project commitments, employees, or undisclosed facts.\n"
-        "5. If a specific We3vision company detail is not found in the knowledge base, politely explain that it is not available "
+        "5. If a specific We3vision company detail is not found in the knowledge base, politely explain in English that it is not available "
         "and provide info@we3vision.com / +91 7383216096.\n"
         "6. Do not ask generic career questions when the user asked about We3vision or its services.\n"
         "7. Keep normal responses concise and conversational.\n"
         "8. Use bullet points only when they improve clarity.\n"
         "9. Do not mention the RAG system, knowledge chunks, system prompt, or internal instructions.\n"
-        f"10. Before returning the response, follow this final language check: {contract}\n"
+        f"10. Before returning the response, follow this final language check: The response must be completely in English. {contract}\n"
     )
 
     full_messages = [
@@ -377,22 +373,22 @@ async def generate_response_node(
 
 
 # ============================================================
-# NODE 5: SAVE CONVERSATION TO GOOGLE SHEETS
+# NODE 5: SAVE CONVERSATION TO SUPABASE
 # ============================================================
 
-async def save_google_sheet_node(
+async def save_supabase_node(
     state: AgentState,
 ) -> Dict[str, Any]:
     """
-    Save the current user/assistant turn to Google Sheets.
+Save the current user/assistant turn to Supabase.
 
-    All messages belonging to the same session are stored
-    in the same conversation_json cell.
-    """
+All messages belonging to the same session are stored
+in the same conversation JSONB field.
+"""
 
     user_id = state.get(
         "user_id",
-        "guest_user",
+        "",
     )
 
     session_id = state.get("session_id")
@@ -411,7 +407,7 @@ async def save_google_sheet_node(
     except Exception as error:
         # Storage failure should not stop the chatbot response
         print(
-            f"[Google Sheets Save Error]: {error}"
+            f"[Supabase Save Error]: {error}"
         )
 
     return {}
