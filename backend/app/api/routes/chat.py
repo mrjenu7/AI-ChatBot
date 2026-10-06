@@ -293,6 +293,32 @@ async def _generate_dynamic_suggestions(
     if not settings.has_openai_api_key:
         return []
 
+    lead_context = ""
+
+    if lead:
+        lead_context = f"""
+    CURRENT LEAD INFORMATION:
+
+    Name: {lead.get("name") or "Not provided"}
+    Email: {lead.get("email") or "Not provided"}
+    Phone: {lead.get("phone") or "Not provided"}
+    Company: {lead.get("company") or "Not provided"}
+    Inquiry type: {lead.get("inquiry_type") or "Not determined"}
+    Requirement: {lead.get("requirement") or "Not provided"}
+
+    Use this information to make the suggestions more relevant.
+    Do NOT ask for information that the user has already provided.
+    """
+    else:
+        lead_context = """
+    CURRENT LEAD INFORMATION:
+
+    No lead information has been collected yet.
+
+    Do not assume any name, email, phone, company, inquiry type,
+    or requirement has been provided.
+    """
+
     prompt = f"""
 You are a follow-up suggestion generator for the We3vision AI Business Assistant.
 
@@ -310,6 +336,8 @@ User message:
 
 Assistant response:
 {assistant_reply}
+
+{lead_context}
 
 lead_context = ""
 
@@ -560,6 +588,9 @@ async def chat_stream(request: ChatRequest):
                 yield json.dumps({"type": "delta", "text": delta}, ensure_ascii=False) + "\n"
 
             full_reply = "".join(full_reply_parts).strip()
+
+            lead = None
+            suggestions = []
 
             if not full_reply:
                 # A rare provider/streaming incompatibility:
