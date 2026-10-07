@@ -691,8 +691,19 @@ async def chat_stream(request: ChatRequest):
                 ensure_ascii=False,
             ) + "\n"
         except Exception as exc:
+            import traceback
+
             print(f"[Streaming Chat Error]: {exc}")
-            yield json.dumps({"type": "error", "message": "stream_failed"}, ensure_ascii=False) + "\n"
+            traceback.print_exc()
+
+            yield json.dumps(
+                {
+                    "type": "error",
+                    "message": "stream_failed",
+                    "detail": str(exc),
+                },
+                ensure_ascii=False,
+            ) + "\n"
 
     return StreamingResponse(
         event_stream(),
