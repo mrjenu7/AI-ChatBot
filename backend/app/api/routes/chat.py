@@ -73,6 +73,60 @@ def _clean_message(request: ChatRequest) -> tuple[str, str, str]:
 
     return request.message.strip(), user_id, session_id
 
+def _clean_chat_response(text: str) -> str:
+    """Remove Markdown formatting from chatbot responses."""
+
+    if not text:
+        return ""
+
+    text = str(text)
+
+    # Remove Markdown headings
+    text = re.sub(
+        r"^\s*#{1,6}\s*",
+        "",
+        text,
+        flags=re.MULTILINE,
+    )
+
+    # Remove bold
+    text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
+
+    # Remove italic
+    text = re.sub(r"(?<!\*)\*(?!\s)(.*?)(?<!\s)\*", r"\1", text)
+
+    # Remove underscore formatting
+    text = re.sub(r"__(.*?)__", r"\1", text)
+    text = re.sub(r"(?<!_)_(?!\s)(.*?)(?<!\s)_", r"\1", text)
+
+    # Remove inline code
+    text = re.sub(r"`([^`]*)`", r"\1", text)
+
+    # Remove bullet markers
+    text = re.sub(
+        r"^\s*[-•]\s+",
+        "",
+        text,
+        flags=re.MULTILINE,
+    )
+
+    # Remove numbered list markers
+    text = re.sub(
+        r"^\s*\d+\.\s+",
+        "",
+        text,
+        flags=re.MULTILINE,
+    )
+
+    # Remove Markdown table pipes
+    text = text.replace("|", " ")
+
+    # Clean excessive spaces/newlines
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    return text.strip()
+
 
 def _stream_system_prompt(rag_context: str, language_profile: Dict[str, object], strict: bool = False) -> str:
     contract = language_contract(language_profile)
@@ -111,8 +165,12 @@ def _stream_system_prompt(rag_context: str, language_profile: Dict[str, object],
         "6. Keep normal answers concise and conversational.\n"
         "7. Write speech-friendly sentences with natural punctuation so the voice can begin while the rest of "
         "the answer is still being generated.\n"
-        f"8. FINAL CHECK: The answer must be 100% in English: {contract}\n"
-    )
+        "8. RESPONSE FORMAT: Return plain text only. Do not use Markdown formatting. "
+        "Never use #, ##, ###, *, **, _, backticks, Markdown bullets, numbered Markdown lists, "
+        "Markdown tables, table pipes (|), or other Markdown syntax. "
+        "Use short natural paragraphs separated by line breaks. "
+        "Do not create decorative headings or formatted lists.\n"
+        f"9. FINAL CHECK: The answer must be 100% in English and plain text: {contract}\n")
 
 
 async def _history_messages(user_id: str, session_id: str) -> List[Dict[str, str]]:
@@ -588,6 +646,7 @@ async def chat_stream(request: ChatRequest):
                 yield json.dumps({"type": "delta", "text": delta}, ensure_ascii=False) + "\n"
 
             full_reply = "".join(full_reply_parts).strip()
+            full_reply = _clean_chat_response(full_reply)
 
             lead = None
             suggestions = []
