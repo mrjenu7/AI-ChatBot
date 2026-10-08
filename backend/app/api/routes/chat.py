@@ -10,7 +10,12 @@ from pydantic import BaseModel
 
 from app.core.config import settings
 from app.graph.workflow import chat_graph
-from app.services.supabase_service import append_turn, load_conversation, get_lead_by_session, upsert_lead
+from app.services.supabase_service import (
+    append_turn,
+    load_conversation,
+    get_lead_by_session,
+    upsert_lead,
+)
 from app.services.language_service import (
     detect_language_profile,
     language_contract,
@@ -39,15 +44,11 @@ class ChatResponse(BaseModel):
 
 def _clean_message(request: ChatRequest) -> tuple[str, str, str]:
     if not request.message or not request.message.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="Message cannot be empty",
-        )
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
 
     user_id = (request.user_id or "").strip()
     session_id = (request.session_id or "").strip()
 
-    # Create a user ID only when no user ID was provided.
     if not user_id:
         user_id = str(uuid4())
     else:
@@ -59,7 +60,6 @@ def _clean_message(request: ChatRequest) -> tuple[str, str, str]:
                 detail="user_id must be a valid UUID",
             )
 
-    # Create a session ID only when no session ID was provided.
     if not session_id:
         session_id = str(uuid4())
     else:
@@ -73,63 +73,36 @@ def _clean_message(request: ChatRequest) -> tuple[str, str, str]:
 
     return request.message.strip(), user_id, session_id
 
+
 def _clean_chat_response(text: str) -> str:
     """Remove Markdown formatting from chatbot responses."""
-
     if not text:
         return ""
 
     text = str(text)
 
-    # Remove Markdown headings
-    text = re.sub(
-        r"^\s*#{1,6}\s*",
-        "",
-        text,
-        flags=re.MULTILINE,
-    )
-
-    # Remove bold
+    text = re.sub(r"^\s*#{1,6}\s*", "", text, flags=re.MULTILINE)
     text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
-
-    # Remove italic
     text = re.sub(r"(?<!\*)\*(?!\s)(.*?)(?<!\s)\*", r"\1", text)
-
-    # Remove underscore formatting
     text = re.sub(r"__(.*?)__", r"\1", text)
     text = re.sub(r"(?<!_)_(?!\s)(.*?)(?<!\s)_", r"\1", text)
-
-    # Remove inline code
     text = re.sub(r"`([^`]*)`", r"\1", text)
-
-    # Remove bullet markers
-    text = re.sub(
-        r"^\s*[-•]\s+",
-        "",
-        text,
-        flags=re.MULTILINE,
-    )
-
-    # Remove numbered list markers
-    text = re.sub(
-        r"^\s*\d+\.\s+",
-        "",
-        text,
-        flags=re.MULTILINE,
-    )
-
-    # Remove Markdown table pipes
+    text = re.sub(r"^\s*[-•]\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^\s*\d+\.\s+", "", text, flags=re.MULTILINE)
     text = text.replace("|", " ")
-
-    # Clean excessive spaces/newlines
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text.strip()
 
 
-def _stream_system_prompt(rag_context: str, language_profile: Dict[str, object], strict: bool = False) -> str:
+def _stream_system_prompt(
+    rag_context: str,
+    language_profile: Dict[str, object],
+    strict: bool = False,
+) -> str:
     contract = language_contract(language_profile)
+
     strict_prefix = ""
     if strict:
         strict_prefix = (
@@ -168,15 +141,23 @@ def _stream_system_prompt(rag_context: str, language_profile: Dict[str, object],
         "8. RESPONSE FORMAT: Return plain text only. Do not use Markdown formatting. "
         "Never use #, ##, ###, *, **, _, backticks, Markdown bullets, numbered Markdown lists, "
         "Markdown tables, table pipes (|), or other Markdown syntax. "
-        "Use short natural paragraphs separated by line breaks. "
-        "Do not create decorative headings or formatted lists.\n"
-        f"9. FINAL CHECK: The answer must be 100% in English and plain text: {contract}\n")
+        "Use short natural paragraphs separated by line breaks.\n"
+        f"9. FINAL CHECK: The answer must be 100% in English and plain text: {contract}\n"
+    )
 
 
-async def _history_messages(user_id: str, session_id: str) -> List[Dict[str, str]]:
+async def _history_messages(
+    user_id: str,
+    session_id: str,
+) -> List[Dict[str, str]]:
     history: List[Dict[str, str]] = []
+
     try:
-        turns = await asyncio.to_thread(load_conversation, user_id, session_id)
+        turns = await asyncio.to_thread(
+            load_conversation,
+            user_id,
+            session_id,
+        )
     except Exception as error:
         print(f"[Supabase Load Error]: {error}")
         turns = []
@@ -184,23 +165,43 @@ async def _history_messages(user_id: str, session_id: str) -> List[Dict[str, str
     for turn in turns:
         history.append({"role": "user", "content": turn.get("user", "")})
         history.append({"role": "assistant", "content": turn.get("assistant", "")})
-    # Keep the request compact for lower first-token latency.
+
     return history[-12:]
 
 
-def _prefix_language_is_valid(text: str, profile: Dict[str, object] | None = None) -> bool:
+def _prefix_language_is_valid(
+    text: str,
+    profile: Dict[str, object] | None = None,
+) -> bool:
     """Validate that streamed text does not contain non-English scripts."""
     gujarati_chars = sum(1 for ch in text if 0x0A80 <= ord(ch) <= 0x0AFF)
     devanagari_chars = sum(1 for ch in text if 0x0900 <= ord(ch) <= 0x097F)
     arabic_chars = sum(1 for ch in text if 0x0600 <= ord(ch) <= 0x06FF)
     cyrillic_chars = sum(1 for ch in text if 0x0400 <= ord(ch) <= 0x04FF)
-    cjk_chars = sum(1 for ch in text if 0x4E00 <= ord(ch) <= 0x9FFF or 0x3040 <= ord(ch) <= 0x30FF or 0xAC00 <= ord(ch) <= 0xD7AF)
+    cjk_chars = sum(
+        1
+        for ch in text
+        if (
+            0x4E00 <= ord(ch) <= 0x9FFF
+            or 0x3040 <= ord(ch) <= 0x30FF
+            or 0xAC00 <= ord(ch) <= 0xD7AF
+        )
+    )
 
-    return (gujarati_chars + devanagari_chars + arabic_chars + cyrillic_chars + cjk_chars) < 2
+    return (
+        gujarati_chars
+        + devanagari_chars
+        + arabic_chars
+        + cyrillic_chars
+        + cjk_chars
+    ) < 2
 
 
-async def _openai_text_stream(messages: List[Dict[str, str]]) -> AsyncIterator[str]:
+async def _openai_text_stream(
+    messages: List[Dict[str, str]],
+) -> AsyncIterator[str]:
     client = _get_client()
+
     stream = await client.chat.completions.create(
         model=settings.llm_model,
         messages=messages,
@@ -208,9 +209,11 @@ async def _openai_text_stream(messages: List[Dict[str, str]]) -> AsyncIterator[s
         max_tokens=settings.llm_max_tokens,
         stream=True,
     )
+
     async for chunk in stream:
         if not chunk.choices:
             continue
+
         delta = chunk.choices[0].delta.content
         if delta:
             yield delta
@@ -223,11 +226,13 @@ async def _validated_text_stream(
     """Stream with a tiny prefix buffer, retrying once if non-English script is detected."""
     for attempt in range(2):
         messages = [dict(item) for item in base_messages]
+
         if attempt == 1:
             messages[0] = {
                 "role": "system",
                 "content": messages[0]["content"]
-                + "\nCRITICAL RETRY: Your previous attempt began in a non-English language. Begin immediately in English. The response MUST be in English only.",
+                + "\nCRITICAL RETRY: Your previous attempt began in a non-English language. "
+                "Begin immediately in English. The response MUST be in English only.",
             }
 
         prefix = ""
@@ -235,19 +240,31 @@ async def _validated_text_stream(
         failed_language = False
 
         async for delta in _openai_text_stream(messages):
-            # Do not expose hidden-thinking tags if a compatible model emits them.
             if not released:
                 prefix += delta
-                visible_probe = re.sub(r"<think>.*?</think>", "", prefix, flags=re.DOTALL).strip()
 
-                if not _prefix_language_is_valid(visible_probe, language_profile):
+                visible_probe = re.sub(
+                    r"<think>.*?</think>",
+                    "",
+                    prefix,
+                    flags=re.DOTALL,
+                ).strip()
+
+                if not _prefix_language_is_valid(
+                    visible_probe,
+                    language_profile,
+                ):
                     failed_language = True
                     break
 
-                if len(visible_probe) >= 20 or (" " in visible_probe and len(visible_probe) >= 8):
+                if len(visible_probe) >= 20 or (
+                    " " in visible_probe and len(visible_probe) >= 8
+                ):
                     released = True
+
                     if prefix:
                         yield prefix
+
                     prefix = ""
                     continue
             else:
@@ -257,14 +274,123 @@ async def _validated_text_stream(
             continue
 
         if not released and prefix:
-            # Short answers may complete before the probe reaches the threshold.
             if _prefix_language_is_valid(prefix, language_profile):
                 yield prefix
                 return
+
             if attempt == 0:
                 continue
 
         return
+
+
+def _fallback_suggestions(
+    user_message: str,
+    assistant_reply: str,
+    lead: Optional[Dict] = None,
+) -> List[str]:
+    """
+    Deterministic fallback suggestions.
+
+    These are intentionally local/no-LLM so suggestions still appear
+    even if the suggestion LLM returns invalid/empty JSON.
+    """
+    text = f"{user_message} {assistant_reply}".lower()
+
+    if any(
+        keyword in text
+        for keyword in [
+            "ai development",
+            "artificial intelligence",
+            "machine learning",
+            "ai solution",
+        ]
+    ):
+        return [
+            "What types of AI solutions do you build?",
+            "Can you suggest an AI solution for my business?",
+            "How can I start an AI project with We3vision?",
+        ]
+
+    if any(
+        keyword in text
+        for keyword in [
+            "chatbot",
+            "conversational ai",
+            "virtual assistant",
+        ]
+    ):
+        return [
+            "What features can you include in the chatbot?",
+            "What technology would you recommend for the chatbot?",
+            "How can I get started with this project?",
+        ]
+
+    if any(
+        keyword in text
+        for keyword in [
+            "e-commerce",
+            "ecommerce",
+            "online store",
+            "online shop",
+        ]
+    ):
+        return [
+            "What features would you recommend for my e-commerce website?",
+            "What technology stack would you suggest for this project?",
+            "How can I get started with the project?",
+        ]
+
+    if any(
+        keyword in text
+        for keyword in [
+            "mobile app",
+            "android app",
+            "ios app",
+            "mobile application",
+        ]
+    ):
+        return [
+            "What features can you include in a mobile app?",
+            "What technology stack would you recommend?",
+            "How can I get started with the app?",
+        ]
+
+    if any(
+        keyword in text
+        for keyword in [
+            "website",
+            "web app",
+            "web application",
+            "web development",
+        ]
+    ):
+        return [
+            "What features would you recommend for my website?",
+            "What technology stack would you suggest?",
+            "How can I get started with the project?",
+        ]
+
+    if any(
+        keyword in text
+        for keyword in [
+            "service",
+            "services",
+            "what do you",
+            "what does we3vision",
+        ]
+    ):
+        return [
+            "What types of AI solutions do you build?",
+            "Can you suggest a solution for my business?",
+            "How can I start a project with We3vision?",
+        ]
+
+    return [
+        "What solutions can We3vision provide for my business?",
+        "What technologies does We3vision work with?",
+        "How can I get started with We3vision?",
+    ]
 
 
 async def _generate_dynamic_suggestions(
@@ -273,134 +399,34 @@ async def _generate_dynamic_suggestions(
     history: List[Dict[str, str]],
     lead: Optional[Dict] = None,
 ) -> List[str]:
-
-    
     """
-    
-    Generate 2-3 relevant follow-up questions when the user
-    shows interest in We3vision services or starting a project.
+    Generate 3 relevant follow-up questions.
+
+    The LLM is used when available, but a deterministic fallback guarantees
+    that the frontend receives suggestions instead of [] when the LLM returns
+    invalid JSON, an empty response, or a transient error.
     """
 
-    message_lower = user_message.lower()
-
-    # Check recent conversation as well as the current message.
-    conversation_text = " ".join(
-        str(item.get("content", ""))
-        for item in history[-8:]
-    ).lower()
-
-    project_keywords = [
-        "project",
-        "build",
-        "develop",
-        "development",
-        "app",
-        "application",
-        "website",
-        "software",
-        "platform",
-        "system",
-        "solution",
-        "ecommerce",
-        "e-commerce",
-        "ai",
-        "chatbot",
-        "idea",
-    ]
-
-    service_keywords = [
-        "service",
-        "services",
-        "hire",
-        "work with",
-        "interested",
-        "looking for",
-        "need your",
-    ]
-
-    is_project_interest = any(
-        keyword in message_lower
-        for keyword in project_keywords
+    fallback = _fallback_suggestions(
+        user_message,
+        assistant_reply,
+        lead,
     )
-
-    is_service_interest = any(
-        keyword in message_lower
-        for keyword in service_keywords
-    )
-
-    # Also continue suggestions if the conversation already contains
-    # a project/service discussion.
-    conversation_is_project = any(
-        keyword in conversation_text
-        for keyword in project_keywords
-    )
-
-    conversation_is_service = any(
-        keyword in conversation_text
-        for keyword in service_keywords
-    )
-
-    if not (
-        is_project_interest
-        or is_service_interest
-        or conversation_is_project
-        or conversation_is_service
-    ):
-        return []
 
     if not settings.has_openai_api_key:
-        return []
+        return fallback
 
-    lead_context = ""
+    lead_context = """
+CURRENT LEAD INFORMATION:
+
+No lead information has been collected yet.
+
+Do not assume any name, email, phone, company, inquiry type,
+or requirement has been provided.
+"""
 
     if lead:
         lead_context = f"""
-    CURRENT LEAD INFORMATION:
-
-    Name: {lead.get("name") or "Not provided"}
-    Email: {lead.get("email") or "Not provided"}
-    Phone: {lead.get("phone") or "Not provided"}
-    Company: {lead.get("company") or "Not provided"}
-    Inquiry type: {lead.get("inquiry_type") or "Not determined"}
-    Requirement: {lead.get("requirement") or "Not provided"}
-
-    Use this information to make the suggestions more relevant.
-    Do NOT ask for information that the user has already provided.
-    """
-    else:
-        lead_context = """
-    CURRENT LEAD INFORMATION:
-
-    No lead information has been collected yet.
-
-    Do not assume any name, email, phone, company, inquiry type,
-    or requirement has been provided.
-    """
-
-    prompt = f"""
-You are a follow-up suggestion generator for the We3vision AI Business Assistant.
-
-The user has just sent a message to the chatbot.
-
-Your job is to generate 3 clickable follow-up questions that the USER
-would naturally want to ask the chatbot next.
-
-IMPORTANT:
-The suggestions must continue the user's current conversation.
-They must NOT be generic business discovery questions.
-
-User message:
-{user_message}
-
-Assistant response:
-{assistant_reply}
-
-{lead_context}
-
-lead_context = ""
-
-if lead:
-    lead_context = 
 CURRENT LEAD INFORMATION:
 
 Name: {lead.get("name") or "Not provided"}
@@ -412,66 +438,41 @@ Requirement: {lead.get("requirement") or "Not provided"}
 
 Use this information to make the suggestions more relevant.
 Do NOT ask for information that the user has already provided.
+"""
 
+    prompt = f"""
+You are a follow-up suggestion generator for the We3vision AI Business Assistant.
 
+Generate exactly 3 short clickable questions that the user would naturally ask next.
 
-Generate 3 questions that:
+The questions must continue THIS conversation and must be directly relevant
+to the latest user message and assistant answer.
 
-1. Are directly related to what the user just asked.
-2. Help the user continue the conversation with the chatbot.
-3. Are questions the USER can ask We3vision.
-4. Are useful for understanding the project or getting relevant guidance.
-5. Do not repeat information already provided by the user.
-6. Do not ask the user for information unless it is naturally useful.
-7. Must be short and natural.
-8. Must be suitable for clickable chatbot buttons.
-9. Do not answer the questions.
-10. Return ONLY a valid JSON array.
-11. If the user's name, email, phone, company, inquiry type, or requirement
-    is already known, NEVER ask for that information again.
+USER MESSAGE:
+{user_message}
 
-12. If the project requirement is clear, suggestions should focus on:
-    features, technology, process, timeline, cost discussion, or getting started.
+ASSISTANT RESPONSE:
+{assistant_reply}
 
-13. If important lead information is missing and asking for it would naturally
-    help the project, one suggestion may ask for it.
+{lead_context}
 
-14. Suggestions must feel like the next logical step in THIS conversation.
+RULES:
+1. Return exactly 3 questions.
+2. Questions must be about We3vision and its services/projects.
+3. Do not answer the questions.
+4. Do not repeat information already provided.
+5. Do not ask for name, email, phone, company, inquiry type, or requirement
+   if that information is already known.
+6. If the requirement is clear, focus on features, technology, process,
+   timeline, cost discussion, or getting started.
+7. Keep each question short and natural.
+8. Return ONLY a valid JSON array of strings.
+9. No Markdown and no code fences.
 
-Examples:
-
-User:
-"I have a clothing business and want to build an e-commerce website."
-
-Good suggestions:
-[
-  "What features would you recommend for my fashion e-commerce website?",
-  "What technology stack would you suggest for this project?",
-  "What information do you need from me to get started?"
-]
-
-User:
-"I want to build an AI chatbot for my company."
-
-Good suggestions:
-[
-  "What type of AI chatbot would be suitable for my business?",
-  "What features can you include in the chatbot?",
-  "How can we get started with this project?"
-]
-
-User:
-"Tell me about your AI development services."
-
-Good suggestions:
-[
-  "What types of AI solutions do you build?",
-  "Can you suggest an AI solution for my business?",
-  "How can I start an AI project with We3vision?"
-]
-
-Return ONLY:
-["Question 1", "Question 2", "Question 3"]
+Example:
+["What types of AI solutions do you build?",
+ "Can you suggest an AI solution for my business?",
+ "How can I start an AI project with We3vision?"]
 """
 
     try:
@@ -483,8 +484,8 @@ Return ONLY:
                 {
                     "role": "system",
                     "content": (
-                        "You generate concise business discovery "
-                        "questions for a chatbot."
+                        "Generate exactly 3 concise follow-up questions. "
+                        "Return only valid JSON."
                     ),
                 },
                 {
@@ -493,10 +494,12 @@ Return ONLY:
                 },
             ],
             temperature=0.2,
-            max_tokens=500,
+            max_tokens=150,
         )
 
-        content = response.choices[0].message.content or ""
+        content = (
+            response.choices[0].message.content or ""
+        ).strip()
 
         content = re.sub(
             r"```(?:json)?|```",
@@ -506,49 +509,77 @@ Return ONLY:
 
         print("[Raw Suggestions Response]:", repr(content))
 
-        try:
-            suggestions = json.loads(content)
+        suggestions: List[str] = []
 
+        try:
+            parsed = json.loads(content)
+
+            if isinstance(parsed, list):
+                suggestions = [
+                    str(item).strip()
+                    for item in parsed
+                    if isinstance(item, str) and item.strip()
+                ]
         except json.JSONDecodeError as error:
             print(f"[Suggestion Parse Error]: {error}")
 
-            # Try to find a complete JSON array inside the response
-            match = re.search(r"\[[\s\S]*\]", content)
+            match = re.search(r"\[[\s\S]*?\]", content)
 
             if match:
                 try:
-                    suggestions = json.loads(match.group(0))
-                except json.JSONDecodeError:
-                    print("[Suggestion Parse Error]: Extracted array is invalid")
-                    return []
-            else:
-                print("[Suggestion Parse Error]: No complete JSON array found")
+                    parsed = json.loads(match.group(0))
 
-                # The model may have returned a truncated array.
-                # Recover quoted strings that were successfully generated.
-                partial_items = re.findall(r'"([^"]+)"', content)
+                    if isinstance(parsed, list):
+                        suggestions = [
+                            str(item).strip()
+                            for item in parsed
+                            if isinstance(item, str) and item.strip()
+                        ]
+                except json.JSONDecodeError as inner_error:
+                    print(
+                        "[Suggestion Parse Error]: "
+                        f"Extracted array is invalid: {inner_error}"
+                    )
 
-                if not partial_items:
-                    return []
+            if not suggestions:
+                # Recover complete quoted strings if possible.
+                partial_items = re.findall(
+                    r'"([^"]{8,200})"',
+                    content,
+                )
 
-                suggestions = partial_items
+                suggestions = [
+                    item.strip()
+                    for item in partial_items
+                    if item.strip()
+                ]
 
-        if not isinstance(suggestions, list):
-            print("[Suggestion Parse Error]: Suggestions is not a list")
-            return []
+        # Never let malformed model output disable the feature.
+        if len(suggestions) < 3:
+            print(
+                "[Suggestion Fallback]: "
+                f"LLM returned {len(suggestions)} usable suggestions"
+            )
 
-        # Keep only short string questions.
-        suggestions = [
-            str(item).strip()
-            for item in suggestions
-            if isinstance(item, str) and item.strip()
-        ]
+            merged: List[str] = []
+
+            for item in suggestions + fallback:
+                item = str(item).strip()
+
+                if item and item not in merged:
+                    merged.append(item)
+
+                if len(merged) == 3:
+                    break
+
+            suggestions = merged
 
         return suggestions[:3]
 
     except Exception as error:
         print(f"[Suggestion Generation Error]: {error}")
-        return []
+        print("[Suggestion Fallback]: Using deterministic suggestions")
+        return fallback[:3]
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -586,74 +617,179 @@ async def chat_stream(request: ChatRequest):
     print("SESSION ID:", session_id)
     print("MESSAGE:", clean_message)
     print("==============================")
+
     language = detect_language_profile(clean_message)
 
     async def event_stream() -> AsyncIterator[str]:
         code = "en"
         locale = "en-IN"
-        yield json.dumps(
-            {"type": "meta", "language": code, "locale": locale, "session_id": session_id},
-            ensure_ascii=False,
-        ) + "\n"
 
-        history = await _history_messages(user_id, session_id)
-        scope = await classify_scope(clean_message, history)
-        if scope in {"OUT_OF_SCOPE", "AMBIGUOUS"}:
-            guarded_reply = refusal(language) if scope == "OUT_OF_SCOPE" else clarification(language)
-            try:
-                await asyncio.to_thread(append_turn, user_id, session_id, clean_message, guarded_reply)
-            except Exception as error:
-                print(f"[Supabase Save Error]: {error}")
-            yield json.dumps({"type": "delta", "text": guarded_reply}, ensure_ascii=False) + "\n"
-            yield json.dumps({
-                "type": "done", "reply": guarded_reply, "language": code,
-                "locale": locale, "session_id": session_id,
-            }, ensure_ascii=False) + "\n"
-            return
-
-        if not settings.has_openai_api_key:
-            fallback = localized_connection_error(language)
-            try:
-                await asyncio.to_thread(
-                    append_turn, user_id, session_id, clean_message, fallback
-                )
-            except Exception as error:
-                print(f"[Supabase Save Error]: {error}")
-            yield json.dumps({"type": "delta", "text": fallback}, ensure_ascii=False) + "\n"
-            yield json.dumps(
+        yield (
+            json.dumps(
                 {
-                    "type": "done",
-                    "reply": fallback,
+                    "type": "meta",
                     "language": code,
                     "locale": locale,
                     "session_id": session_id,
                 },
                 ensure_ascii=False,
-            ) + "\n"
+            )
+            + "\n"
+        )
+
+        history = await _history_messages(user_id, session_id)
+
+        scope = await classify_scope(
+            clean_message,
+            history,
+        )
+
+        if scope in {"OUT_OF_SCOPE", "AMBIGUOUS"}:
+            guarded_reply = (
+                refusal(language)
+                if scope == "OUT_OF_SCOPE"
+                else clarification(language)
+            )
+
+            try:
+                await asyncio.to_thread(
+                    append_turn,
+                    user_id,
+                    session_id,
+                    clean_message,
+                    guarded_reply,
+                )
+            except Exception as error:
+                print(f"[Supabase Save Error]: {error}")
+
+            yield (
+                json.dumps(
+                    {
+                        "type": "delta",
+                        "text": guarded_reply,
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+
+            suggestions = _fallback_suggestions(
+                clean_message,
+                guarded_reply,
+                None,
+            )
+
+            yield (
+                json.dumps(
+                    {
+                        "type": "done",
+                        "reply": guarded_reply,
+                        "language": code,
+                        "locale": locale,
+                        "session_id": session_id,
+                        "suggestions": suggestions,
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
             return
 
-        rag_context = await asyncio.to_thread(retrieve_relevant_context, clean_message)
+        if not settings.has_openai_api_key:
+            fallback = localized_connection_error(language)
+
+            try:
+                await asyncio.to_thread(
+                    append_turn,
+                    user_id,
+                    session_id,
+                    clean_message,
+                    fallback,
+                )
+            except Exception as error:
+                print(f"[Supabase Save Error]: {error}")
+
+            yield (
+                json.dumps(
+                    {
+                        "type": "delta",
+                        "text": fallback,
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+
+            yield (
+                json.dumps(
+                    {
+                        "type": "done",
+                        "reply": fallback,
+                        "language": code,
+                        "locale": locale,
+                        "session_id": session_id,
+                        "suggestions": _fallback_suggestions(
+                            clean_message,
+                            fallback,
+                        ),
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+            return
+
+        rag_context = await asyncio.to_thread(
+            retrieve_relevant_context,
+            clean_message,
+        )
+
         messages: List[Dict[str, str]] = [
-            {"role": "system", "content": _stream_system_prompt(rag_context, language)}
+            {
+                "role": "system",
+                "content": _stream_system_prompt(
+                    rag_context,
+                    language,
+                ),
+            }
         ]
+
         messages.extend(history)
-        messages.append({"role": "user", "content": clean_message})
+        messages.append(
+            {
+                "role": "user",
+                "content": clean_message,
+            }
+        )
 
         full_reply_parts: List[str] = []
+
         try:
-            async for delta in _validated_text_stream(messages, language):
+            async for delta in _validated_text_stream(
+                messages,
+                language,
+            ):
                 full_reply_parts.append(delta)
-                yield json.dumps({"type": "delta", "text": delta}, ensure_ascii=False) + "\n"
+
+                yield (
+                    json.dumps(
+                        {
+                            "type": "delta",
+                            "text": delta,
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
 
             full_reply = "".join(full_reply_parts).strip()
             full_reply = _clean_chat_response(full_reply)
 
             lead = None
-            suggestions = []
+            suggestions: List[str] = []
 
             if not full_reply:
-                # A rare provider/streaming incompatibility:
-                # use the normal graph once and stream its reply in slices.
+                # Rare provider/streaming incompatibility.
                 initial_state = {
                     "user_id": user_id,
                     "session_id": session_id,
@@ -671,21 +807,20 @@ async def chat_stream(request: ChatRequest):
                     or localized_connection_error(language)
                 ).strip()
 
-                # Stream the fallback response in small chunks so the frontend
-                # receives the answer progressively.
                 for start in range(0, len(full_reply), 48):
                     piece = full_reply[start:start + 48]
 
-                    yield json.dumps(
-                        {
-                            "type": "delta",
-                            "text": piece,
-                        },
-                        ensure_ascii=False,
-                    ) + "\n"
+                    yield (
+                        json.dumps(
+                            {
+                                "type": "delta",
+                                "text": piece,
+                            },
+                            ensure_ascii=False,
+                        )
+                        + "\n"
+                    )
 
-                # IMPORTANT:
-                # Save the fallback response to Supabase too.
                 try:
                     await asyncio.to_thread(
                         append_turn,
@@ -696,6 +831,11 @@ async def chat_stream(request: ChatRequest):
                     )
                 except Exception as error:
                     print(f"[Supabase Save Error]: {error}")
+
+                suggestions = _fallback_suggestions(
+                    clean_message,
+                    full_reply,
+                )
 
             else:
                 try:
@@ -709,60 +849,61 @@ async def chat_stream(request: ChatRequest):
                 except Exception as error:
                     print(f"[Supabase Save Error]: {error}")
 
-
-                # ============================================
-                # EXTRACT + SAVE LEAD DATA
-                # ============================================
-
+                # Lead extraction is deterministic and does not use an LLM.
                 lead = await _update_chat_lead(
                     session_id=session_id,
                     user_message=clean_message,
                     history=history,
                 )
 
-
-                # ============================================
-                # GENERATE DYNAMIC FOLLOW-UP SUGGESTIONS
-                # ============================================
-
+                # Generate suggestions. The function always has a deterministic
+                # fallback, so the feature cannot silently become [] because
+                # of malformed LLM JSON.
                 suggestions = await _generate_dynamic_suggestions(
                     clean_message,
                     full_reply,
                     history,
                     lead,
                 )
+
             print("===================================")
             print("USER:", clean_message)
             print("LEAD:", lead)
             print("SUGGESTIONS:", suggestions)
             print("===================================")
 
+            yield (
+                json.dumps(
+                    {
+                        "type": "done",
+                        "reply": full_reply,
+                        "language": code,
+                        "locale": locale,
+                        "session_id": session_id,
+                        "suggestions": suggestions[:3],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
 
-            yield json.dumps(
-                {
-                    "type": "done",
-                    "reply": full_reply,
-                    "language": code,
-                    "locale": locale,
-                    "session_id": session_id,
-                    "suggestions": suggestions,
-                },
-                ensure_ascii=False,
-            ) + "\n"
         except Exception as exc:
             import traceback
 
             print(f"[Streaming Chat Error]: {exc}")
             traceback.print_exc()
 
-            yield json.dumps(
-                {
-                    "type": "error",
-                    "message": "stream_failed",
-                    "detail": str(exc),
-                },
-                ensure_ascii=False,
-            ) + "\n"
+            yield (
+                json.dumps(
+                    {
+                        "type": "error",
+                        "message": "stream_failed",
+                        "detail": str(exc),
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
 
     return StreamingResponse(
         event_stream(),
@@ -798,8 +939,8 @@ def _extract_lead_data(
     """
     Extract basic lead information without another LLM call.
 
-    This intentionally uses deterministic extraction so every chat
-    message does NOT consume another LLM request/token budget.
+    Deterministic extraction keeps every normal chat message from
+    consuming another LLM request.
     """
 
     text = str(user_message or "").strip()
@@ -813,10 +954,7 @@ def _extract_lead_data(
         "requirement": None,
     }
 
-    # --------------------------------------------------------
     # EMAIL
-    # --------------------------------------------------------
-
     email_match = re.search(
         r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b",
         text,
@@ -826,28 +964,29 @@ def _extract_lead_data(
     if email_match:
         result["email"] = email_match.group(0).strip()
 
-    # --------------------------------------------------------
     # PHONE
-    # --------------------------------------------------------
-
     phone_match = re.search(
         r"(?<!\d)(?:\+?\d[\d\s().-]{8,}\d)(?!\d)",
         text,
     )
 
     if phone_match:
-        phone = re.sub(r"[^\d+]", "", phone_match.group(0))
+        phone = re.sub(
+            r"[^\d+]",
+            "",
+            phone_match.group(0),
+        )
 
-        # Avoid accidentally storing very short numbers.
-        digits_only = re.sub(r"\D", "", phone)
+        digits_only = re.sub(
+            r"\D",
+            "",
+            phone,
+        )
 
         if 10 <= len(digits_only) <= 15:
             result["phone"] = phone
 
-    # --------------------------------------------------------
     # NAME
-    # --------------------------------------------------------
-
     name_patterns = [
         r"\bmy name is\s+([A-Za-z][A-Za-z .'-]{1,60})",
         r"\bi am\s+([A-Za-z][A-Za-z .'-]{1,60})",
@@ -866,7 +1005,6 @@ def _extract_lead_data(
         if match:
             candidate = match.group(1).strip()
 
-            # Stop common sentence continuations.
             candidate = re.split(
                 r"\b(?:and|from|at|working|my|our|i|we)\b",
                 candidate,
@@ -878,30 +1016,24 @@ def _extract_lead_data(
                 result["name"] = candidate
                 break
 
-    # --------------------------------------------------------
     # COMPANY
-    # --------------------------------------------------------
-
+    #
+    # Important: do NOT use a generic "from <anything>" pattern here.
+    # That pattern was capable of treating normal phrases such as
+    # "your portfolio for this use case..." as company information.
     company_patterns = [
-    r"\bmy company name is\s+(.+?)(?:[.!?,]|$)",
-    r"\bour company name is\s+(.+?)(?:[.!?,]|$)",
-    r"\bthe company name is\s+(.+?)(?:[.!?,]|$)",
-    r"\bcompany name is\s+(.+?)(?:[.!?,]|$)",
-
-    r"\bmy company is\s+(.+?)(?:[.!?,]|$)",
-    r"\bour company is\s+(.+?)(?:[.!?,]|$)",
-    r"\bcompany is\s+(.+?)(?:[.!?,]|$)",
-
-    r"\bwe are from\s+(.+?)(?:[.!?,]|$)",
-    r"\bwe're from\s+(.+?)(?:[.!?,]|$)",
-    r"\bi am from\s+(.+?)(?:[.!?,]|$)",
-    r"\bi'm from\s+(.+?)(?:[.!?,]|$)",
-
-    r"\bi work at\s+(.+?)(?:[.!?,]|$)",
-    r"\bi work for\s+(.+?)(?:[.!?,]|$)",
-
-    r"\bfrom\s+([A-Z][A-Za-z0-9& .'-]{1,80})(?:[.!?,]|$)",
-]
+        r"\bmy company name is\s+(.+?)(?:[.!?,]|$)",
+        r"\bour company name is\s+(.+?)(?:[.!?,]|$)",
+        r"\bthe company name is\s+(.+?)(?:[.!?,]|$)",
+        r"\bcompany name is\s+(.+?)(?:[.!?,]|$)",
+        r"\bmy company is\s+(.+?)(?:[.!?,]|$)",
+        r"\bour company is\s+(.+?)(?:[.!?,]|$)",
+        r"\bcompany is\s+(.+?)(?:[.!?,]|$)",
+        r"\bi work at\s+(.+?)(?:[.!?,]|$)",
+        r"\bi work for\s+(.+?)(?:[.!?,]|$)",
+        r"\bwe are from\s+(.+?)(?:[.!?,]|$)",
+        r"\bwe're from\s+(.+?)(?:[.!?,]|$)",
+    ]
 
     for pattern in company_patterns:
         match = re.search(
@@ -913,14 +1045,29 @@ def _extract_lead_data(
         if match:
             candidate = match.group(1).strip()
 
-            if candidate:
+            # Avoid storing obvious conversational filler.
+            candidate = re.sub(
+                r"\s+",
+                " ",
+                candidate,
+            ).strip(" ,.-")
+
+            if (
+                candidate
+                and len(candidate) <= 100
+                and candidate.lower()
+                not in {
+                    "you",
+                    "your",
+                    "we3vision",
+                    "this",
+                    "that",
+                }
+            ):
                 result["company"] = candidate
                 break
 
-    # --------------------------------------------------------
     # INQUIRY TYPE
-    # --------------------------------------------------------
-
     inquiry_patterns = [
         (
             r"\b(e[- ]?commerce|online store|online shop|"
@@ -928,12 +1075,12 @@ def _extract_lead_data(
             "E-commerce website",
         ),
         (
-            r"\b(ai|artificial intelligence|machine learning)\b",
-            "AI development",
-        ),
-        (
             r"\b(chatbot|conversational ai|virtual assistant)\b",
             "AI chatbot",
+        ),
+        (
+            r"\b(ai|artificial intelligence|machine learning)\b",
+            "AI development",
         ),
         (
             r"\b(mobile app|android app|ios app|mobile application)\b",
@@ -950,14 +1097,15 @@ def _extract_lead_data(
     ]
 
     for pattern, inquiry_type in inquiry_patterns:
-        if re.search(pattern, text, flags=re.IGNORECASE):
+        if re.search(
+            pattern,
+            text,
+            flags=re.IGNORECASE,
+        ):
             result["inquiry_type"] = inquiry_type
             break
 
-    # --------------------------------------------------------
     # REQUIREMENT
-    # --------------------------------------------------------
-
     requirement_keywords = [
         "need",
         "want",
@@ -978,6 +1126,8 @@ def _extract_lead_data(
         "solution",
         "chatbot",
         "ai",
+        "service",
+        "services",
     ]
 
     has_requirement = any(
@@ -986,11 +1136,10 @@ def _extract_lead_data(
     )
 
     if has_requirement:
-        # Store the user's actual requirement rather than
-        # generating another LLM summary.
         result["requirement"] = text[:1000]
 
     return result
+
 
 async def _update_chat_lead(
     session_id: str,
@@ -1008,14 +1157,11 @@ async def _update_chat_lead(
             history,
         )
 
-        # Load current lead first.
         existing = await asyncio.to_thread(
             get_lead_by_session,
             session_id,
         )
 
-        # If nothing useful was found and no lead exists,
-        # don't create an empty lead.
         has_new_data = any(
             value
             for value in extracted.values()
@@ -1023,11 +1169,6 @@ async def _update_chat_lead(
 
         if not existing and not has_new_data:
             return None
-
-        # ----------------------------------------------------
-        # Preserve previous requirement and append useful
-        # requirement information when appropriate.
-        # ----------------------------------------------------
 
         requirement = extracted.get("requirement")
 
@@ -1037,9 +1178,11 @@ async def _update_chat_lead(
             and requirement
             and requirement != existing.get("requirement")
         ):
-            old_requirement = existing.get("requirement", "")
+            old_requirement = existing.get(
+                "requirement",
+                "",
+            )
 
-            # Avoid endlessly duplicating the same message.
             if requirement not in old_requirement:
                 requirement = (
                     f"{old_requirement}\n{requirement}"
@@ -1065,6 +1208,6 @@ async def _update_chat_lead(
         return lead
 
     except Exception as error:
-        # Lead storage should NEVER break the chatbot.
+        # Lead storage must never break the chatbot.
         print(f"[Lead Update Error]: {error}")
         return None
