@@ -14,6 +14,68 @@ PDF_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "we3vision_k
 
 _CHUNKS_CACHE: Optional[List[Dict]] = None
 
+# The website currently has seven public service landing pages. Detailed
+# knowledge-base records must link to one of these canonical routes instead of
+# their legacy per-service URLs, many of which are not implemented in the site.
+MAIN_SERVICE_PAGE_BY_ID = {
+    # Brand and design
+    "brand_identity_and_rebranding": "/brand-identity",
+    "graphics_ui_ux_design": "/ui-ux-design",
+    "animation_services_2d_3d": "/metaverse",
+    "cgi_video_production_services": "/metaverse",
+    "modeling_services_3d": "/metaverse",
+    # Web and mobile
+    "website_redesign_services": "/webdev",
+    "web_development_services": "/webdev",
+    "mobile_app_development_services": "/mobile",
+    "software_development_services": "/webdev",
+    "custom_development_services": "/webdev",
+    "low_code_development_services": "/webdev",
+    "saas_development_services": "/webdev",
+    "shopify_development_services": "/webdev",
+    "wordpress_development_services": "/webdev",
+    "technology_migration_services": "/webdev",
+    # Enterprise systems
+    "erp_solutions_services": "/crm",
+    "erp_development_services": "/crm",
+    "crm_development_services": "/crm",
+    # Marketing related to the available brand and web pages
+    "digital_marketing_services": "/brand-identity",
+    "seo_optimization_services": "/webdev",
+    "immersive_marketing_services": "/metaverse",
+    # AI
+    "ai_development_services": "/ai",
+    "generative_ai_services": "/ai",
+    "ai_agents_services": "/ai",
+    "rag_ai_services": "/ai",
+    "machine_learning_services": "/ai",
+    "computer_vision_services": "/ai",
+    "ai_automation_services": "/ai",
+    "mlops_services": "/ai",
+    # Immersive technology
+    "ar_development_services": "/metaverse",
+    "vr_development_services": "/metaverse",
+    "mr_mixed_reality_solutions": "/metaverse",
+    "xr_extended_reality_solutions": "/metaverse",
+    "metaverse_solutions": "/metaverse",
+    # Games and Web3
+    "android_game_development": "/mobile",
+    "ios_game_development": "/mobile",
+    "metaverse_games_development": "/metaverse",
+    "nft_game_development": "/metaverse",
+    "nft_marketplace_development": "/metaverse",
+}
+
+MAIN_SERVICE_PAGE_BY_CATEGORY = {
+    "Design & Creative": "/brand-identity",
+    "Web & Software Development": "/webdev",
+    "Enterprise Solutions": "/crm",
+    "Marketing": "/brand-identity",
+    "AI & Machine Learning": "/ai",
+    "Immersive Technology": "/metaverse",
+    "Games & Web3": "/metaverse",
+}
+
 
 def get_service_options() -> List[Dict[str, str]]:
     """Build selectable service options directly from the loaded knowledge base."""
@@ -28,8 +90,9 @@ def get_service_options() -> List[Dict[str, str]]:
             continue
         if "overview" in title.lower():
             continue
-        raw_url = str(chunk.get("url", "")).split(",", 1)[0].strip()
-        service_url = raw_url if raw_url.startswith("/") and not raw_url.startswith("//") else ""
+        service_url = MAIN_SERVICE_PAGE_BY_ID.get(service_id)
+        if not service_url:
+            service_url = MAIN_SERVICE_PAGE_BY_CATEGORY.get(category, "")
         options.append({"id": service_id, "title": title, "category": category, "url": service_url})
     return options
 
@@ -52,6 +115,37 @@ def get_service_links_from_context(context: str, limit: int = 3) -> List[Dict[st
         if len(links) >= limit:
             break
     return links
+
+
+def build_grounded_fallback_reply(query: str, context: str) -> str:
+    """Build a small source-grounded answer when the LLM provider is unavailable."""
+    if not context or "No matching records were found" in context:
+        return (
+            "I don't have confirmed information in the available We3vision details for that request. "
+            "Please contact info@we3vision.com or +91 7383216096 to confirm how the team can help."
+        )
+
+    match = re.search(r"^###\s+(.+?)\s*$", context, flags=re.MULTILINE)
+    title = match.group(1).strip() if match else "We3vision's services"
+    query_terms = set(_tokenize(query))
+    title_lower = title.lower()
+
+    # Use explicit facts from the relevant service record for common requests.
+    if "web development" in title_lower and query_terms & {
+        "website", "websites", "ecommerce", "e", "commerce", "payment", "payments", "order", "orders", "online"
+    }:
+        return (
+            "We3vision's Web Development Services cover responsive websites and e-commerce online stores. "
+            "The available information also describes back-end development and API integrations. "
+            "It does not specifically confirm online payment or order-management features, so please contact "
+            "info@we3vision.com or +91 7383216096 to verify those requirements."
+        )
+
+    return (
+        f"We3vision offers {title}. The available information confirms this service, but does not confirm "
+        "every project-specific feature or requirement. Please share the details with the We3vision team at "
+        "info@we3vision.com or +91 7383216096 so they can confirm what fits your project."
+    )
 
 
 def load_knowledge_chunks(force_reload: bool = False) -> List[Dict]:

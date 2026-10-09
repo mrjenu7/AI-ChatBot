@@ -8,12 +8,15 @@ from app.services.supabase_service import append_turn, load_conversation
 from app.services.language_service import (
     detect_language_profile,
     language_contract,
-    localized_connection_error,
     response_matches_language,
 )
 from app.services.company_guard import classify_scope, refusal, clarification
 from app.services.llm_service import _get_client
-from app.services.rag_service import get_service_option, retrieve_relevant_context
+from app.services.rag_service import (
+    build_grounded_fallback_reply,
+    get_service_option,
+    retrieve_relevant_context,
+)
 
 
 # ============================================================
@@ -280,9 +283,7 @@ async def generate_response_node(
     # Return a safe localized message when API key is missing
     if not settings.has_openai_api_key:
         return {
-            "reply": localized_connection_error(
-                language_profile
-            )
+            "reply": build_grounded_fallback_reply(user_message, rag_context)
         }
 
     rag_system_prompt = (
@@ -350,24 +351,19 @@ async def generate_response_node(
                     f"{repair_error}"
                 )
 
-                # Avoid returning an answer in the wrong language
-                reply = localized_connection_error(
-                    language_profile
-                )
+                # Preserve the English-only contract and use verified source facts
+                # if a language-repair call cannot be completed.
+                reply = build_grounded_fallback_reply(user_message, rag_context)
 
         if not reply:
-            reply = localized_connection_error(
-                language_profile
-            )
+            reply = build_grounded_fallback_reply(user_message, rag_context)
 
     except Exception as error:
         print(
             f"[LangGraph LLM Node Error]: {error}"
         )
 
-        reply = localized_connection_error(
-            language_profile
-        )
+        reply = build_grounded_fallback_reply(user_message, rag_context)
 
     return {
         "reply": reply

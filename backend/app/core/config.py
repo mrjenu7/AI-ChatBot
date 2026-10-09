@@ -37,6 +37,8 @@ class Settings(BaseSettings):
 
     # App
     frontend_url: str = "http://localhost:5173"
+    admin_api_token: str = ""
+    admin_panel_origins: str = "http://localhost:4174,http://127.0.0.1:4174"
 
     @staticmethod
     def is_api_key_configured(value: str) -> bool:
