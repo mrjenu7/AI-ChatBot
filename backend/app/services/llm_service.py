@@ -62,7 +62,7 @@ async def generate_reply(messages: List[Dict[str, str]]) -> str:
             model=settings.llm_model,
             messages=[{"role": "system", "content": prompt}] + messages,
             temperature=settings.llm_temperature,
-            max_tokens=settings.llm_max_tokens,
+            max_tokens=min(settings.llm_max_tokens, 300),
         )
         return (response.choices[0].message.content or "").strip()
     except Exception as exc:

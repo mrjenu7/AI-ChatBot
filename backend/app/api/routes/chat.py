@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.config import settings
 from app.graph.workflow import chat_graph
@@ -23,16 +23,22 @@ from app.services.language_service import (
 )
 from app.services.company_guard import classify_scope, refusal, clarification
 from app.services.llm_service import _get_client
-from app.services.rag_service import retrieve_relevant_context
+from app.services.rag_service import (
+    get_service_links_from_context,
+    get_service_option,
+    get_service_options,
+    retrieve_relevant_context,
+)
 
 
 router = APIRouter()
 
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=1000)
     user_id: Optional[str] = None
     session_id: Optional[str] = None
+    selected_service_id: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -40,9 +46,16 @@ class ChatResponse(BaseModel):
     session_id: Optional[str] = None
     language: str
     locale: str
+    service_links: List[Dict[str, str]] = Field(default_factory=list)
 
 
-def _clean_message(request: ChatRequest) -> tuple[str, str, str]:
+@router.get("/chat/services")
+async def chat_services():
+    """Expose available chatbot service filters from the knowledge base."""
+    return {"services": get_service_options()}
+
+
+def _clean_message(request: ChatRequest) -> tuple[str, str, str, Optional[str]]:
     if not request.message or not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
@@ -71,7 +84,11 @@ def _clean_message(request: ChatRequest) -> tuple[str, str, str]:
                 detail="session_id must be a valid UUID",
             )
 
-    return request.message.strip(), user_id, session_id
+    selected_service_id = (request.selected_service_id or "").strip() or None
+    if selected_service_id and not get_service_option(selected_service_id):
+        raise HTTPException(status_code=400, detail="selected_service_id is not a valid We3vision service")
+
+    return request.message.strip(), user_id, session_id, selected_service_id
 
 
 def _clean_chat_response(text: str) -> str:
@@ -100,51 +117,23 @@ def _stream_system_prompt(
     rag_context: str,
     language_profile: Dict[str, object],
     strict: bool = False,
+    selected_service_title: Optional[str] = None,
 ) -> str:
     contract = language_contract(language_profile)
-
-    strict_prefix = ""
-    if strict:
-        strict_prefix = (
-            "CRITICAL OUTPUT RULE: Start the very first sentence in English and keep "
-            "every explanatory sentence strictly in English. Do not reply in any other language.\n"
-        )
-
-    return (
-        f"{settings.system_prompt}\n\n"
-        f"{strict_prefix}"
-        "=== CURRENT RESPONSE LANGUAGE CONTRACT ===\n"
-        f"{contract}\n"
-        "Understand the user's message in whatever language they use. Always generate the answer "
-        "ONLY in English. Do not reply in any non-English language.\n"
-        "==========================================\n\n"
-        "=== VERIFIED WE3VISION COMPANY KNOWLEDGE BASE ===\n"
-        f"{rag_context}\n"
-        "=================================================\n"
-        "BUSINESS AGENT RULES:\n"
-        "1. STRICT COMPANY FOCUS: You are exclusively the official AI Business Assistant of We3vision Private Limited. "
-        "Answer ONLY questions related to We3vision (services, technologies, portfolio, projects, company background, "
-        "office locations, careers, and contact info) or polite greetings/pleasantries.\n"
-        "2. STRICT OUT-OF-SCOPE REFUSAL: If the user asks about ANY topic unrelated to We3vision "
-        "(such as general knowledge, history, celebrities, sports, politics, weather, recipes, personal advice, "
-        "general math, non-company coding tutorials, or other businesses), DO NOT ANSWER OR PROVIDE THAT INFORMATION. "
-        "Politely decline the request in English, explaining that you can only answer questions "
-        "about We3vision and its services. Invite them to ask about We3vision or provide contact details: "
-        "info@we3vision.com / +91 7383216096.\n"
-        "3. Use only approved facts from the knowledge base for company-specific claims.\n"
-        "4. Never invent prices, policies, project commitments, vacancies, or undisclosed company facts.\n"
-        "5. If a requested We3vision company fact is unavailable, say that in English and offer "
-        "info@we3vision.com and +91 7383216096.\n"
-        "6. Keep normal answers concise and conversational.\n"
-        "7. Write speech-friendly sentences with natural punctuation so the voice can begin while the rest of "
-        "the answer is still being generated.\n"
-        "8. RESPONSE FORMAT: Return plain text only. Do not use Markdown formatting. "
-        "Never use #, ##, ###, *, **, _, backticks, Markdown bullets, numbered Markdown lists, "
-        "Markdown tables, table pipes (|), or other Markdown syntax. "
-        "Use short natural paragraphs separated by line breaks.\n"
-        f"9. FINAL CHECK: The answer must be 100% in English and plain text: {contract}\n"
+    selected_service_instruction = (
+        f"Selected service focus: {selected_service_title}. This only focuses retrieval; it is not evidence.\n"
+        if selected_service_title else ""
     )
-
+    strict_prefix = "Begin in English and keep the entire reply in English.\n" if strict else ""
+    return (
+        f"{settings.system_prompt}\n\n{strict_prefix}"
+        f"Language contract: {contract} Reply only in English.\n"
+        f"Verified We3vision knowledge:\n{rag_context}\n"
+        f"{selected_service_instruction}"
+        "Use retrieved text as the only source for company facts. Keep claims attached to their service; examples do not prove every feature is offered. "
+        "If a detail is missing or marked unverified, say it needs confirmation. Do not invent capabilities, results, prices, timelines, or commitments. "
+        "Decline unrelated requests. Answer directly in 2-4 concise sentences, ask at most one useful follow-up, and use plain text without Markdown."
+    )
 
 async def _history_messages(
     user_id: str,
@@ -166,7 +155,18 @@ async def _history_messages(
         history.append({"role": "user", "content": turn.get("user", "")})
         history.append({"role": "assistant", "content": turn.get("assistant", "")})
 
-    return history[-12:]
+    # Keep only two recent turns and a strict character budget for follow-ups.
+    bounded: List[Dict[str, str]] = []
+    remaining = 1200
+    for item in reversed(history[-4:]):
+        content = str(item.get("content", ""))
+        if not content or remaining <= 0:
+            continue
+        if len(content) > remaining:
+            content = content[-remaining:]
+        bounded.append({"role": item["role"], "content": content})
+        remaining -= len(content)
+    return list(reversed(bounded))
 
 
 def _prefix_language_is_valid(
@@ -206,7 +206,7 @@ async def _openai_text_stream(
         model=settings.llm_model,
         messages=messages,
         temperature=settings.llm_temperature,
-        max_tokens=settings.llm_max_tokens,
+        max_tokens=min(settings.llm_max_tokens, 300),
         stream=True,
     )
 
@@ -584,13 +584,14 @@ Example:
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    clean_message, user_id, session_id = _clean_message(request)
+    clean_message, user_id, session_id, selected_service_id = _clean_message(request)
     language = detect_language_profile(clean_message)
 
     initial_state = {
         "user_id": user_id,
         "session_id": session_id,
         "message": clean_message,
+        "selected_service_id": selected_service_id,
         "history": [],
         "rag_context": "",
         "language": language,
@@ -604,13 +605,15 @@ async def chat(request: ChatRequest):
         session_id=session_id,
         language="en",
         locale="en-IN",
+        service_links=get_service_links_from_context(final_state.get("rag_context", "")),
     )
 
 
 @router.post("/chat/stream")
 async def chat_stream(request: ChatRequest):
     """Low-latency NDJSON chat stream used by the real-time text + speech frontend."""
-    clean_message, user_id, session_id = _clean_message(request)
+    clean_message, user_id, session_id, selected_service_id = _clean_message(request)
+    selected_service = get_service_option(selected_service_id)
 
     print("========== CHAT IDS ==========")
     print("USER ID:", user_id)
@@ -637,7 +640,7 @@ async def chat_stream(request: ChatRequest):
             + "\n"
         )
 
-        history = await _history_messages(user_id, session_id)
+        history = [] if selected_service else await _history_messages(user_id, session_id)
 
         scope = await classify_scope(
             clean_message,
@@ -742,6 +745,7 @@ async def chat_stream(request: ChatRequest):
         rag_context = await asyncio.to_thread(
             retrieve_relevant_context,
             clean_message,
+            selected_service_id=selected_service_id,
         )
 
         messages: List[Dict[str, str]] = [
@@ -750,6 +754,7 @@ async def chat_stream(request: ChatRequest):
                 "content": _stream_system_prompt(
                     rag_context,
                     language,
+                    selected_service_title=selected_service["title"] if selected_service else None,
                 ),
             }
         ]
@@ -794,6 +799,7 @@ async def chat_stream(request: ChatRequest):
                     "user_id": user_id,
                     "session_id": session_id,
                     "message": clean_message,
+                    "selected_service_id": selected_service_id,
                     "history": [],
                     "rag_context": "",
                     "language": language,

@@ -16,6 +16,8 @@ _SIMILAR = re.compile(r"\bwe(?:[a-z0-9]|[\s_-])*vision\b", re.I)
 _GREETING = re.compile(r"^(?:hi|hello|hey|good morning|good afternoon|good evening|thanks|thank you|bye|namaste|kem cho|namaskar)[! .?]*$", re.I)
 # Explicit other-company questions should never be answered using We3vision RAG.
 _OTHER_COMPANIES = re.compile(r"\b(?:google|microsoft|apple|amazon|meta|facebook|openai|infosys|tcs|wipro|accenture)\b", re.I)
+_GOOGLE_VISIBILITY = re.compile(r"\b(?:appear(?:ing)?|rank(?:ing)?|visibility|seo|search results?)\b", re.I)
+_OWN_BUSINESS = re.compile(r"\b(?:my|our|business|bakery|website|site|store|shop|brand|products?)\b", re.I)
 _COMPARISON = re.compile(r"\b(?:compare|comparison|versus|vs\.?|better than|different from|difference between)\b", re.I)
 _BUSINESS_REQUEST = re.compile(
     r"\b(?:your|you|services?|products?|portfolio|projects?|contact|office|"
@@ -72,13 +74,20 @@ def _fast_scope(message: str, history: Optional[List[Dict[str, str]]] = None) ->
     if _GREETING.fullmatch(clean):
         return "GREETING"
     has_official = bool(_OFFICIAL.search(clean))
-    if _OTHER_COMPANIES.search(clean):
+    google_business_search = bool(
+        re.search(r"\bgoogle\b", clean, re.I)
+        and _GOOGLE_VISIBILITY.search(clean)
+        and _OWN_BUSINESS.search(clean)
+    )
+    if _OTHER_COMPANIES.search(clean) and not google_business_search:
         return "OUT_OF_SCOPE"
     if has_official and _COMPARISON.search(clean):
         return "OUT_OF_SCOPE"  # Company comparisons are outside this bot's scope.
     if _GENERAL_TOPIC.search(clean):
         return "OUT_OF_SCOPE"
     if has_official:
+        return "IN_SCOPE"
+    if google_business_search:
         return "IN_SCOPE"
     # A named third-party company is not a We3vision alias.
     if re.search(r"\b(?:about|at|from)\s+[A-Z][\w-]*(?:\s+[A-Z][\w-]*){0,2}\s+(?:company|corporation|pvt\.?\s*ltd\.?|limited)\b", clean):
