@@ -86,7 +86,9 @@ def get_service_options() -> List[Dict[str, str]]:
         service_id = str(chunk.get("id", "")).strip()
         if not service_id or not title or not category:
             continue
-        if category in {"Corporate", "Overview", "Careers", "Portfolio"}:
+        # Admin uploads are searchable knowledge for chat, but they are not
+        # selectable public services in the website's service picker.
+        if category in {"Corporate", "Overview", "Careers", "Portfolio", "Admin Uploaded Document"}:
             continue
         if "overview" in title.lower():
             continue
