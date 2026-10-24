@@ -1,0 +1,294 @@
+SOURCE URL: https://07.we3vision.com/software-development-services
+TITLE: Custom Software Development in Surat, India | We3vision
+
+Software Development
+Software, built
+the way it ships.
+Spreadsheets, scattered tools and manual work slow a business down. We build custom software around the way your team really works: simple to use, secure and ready to grow.
+Get a free quote
+See how we work
+your-software — Visual Studio Code
+EXPLORER
+TS
+orders.service.ts
+TS
+api/routes.ts
+DB
+schema.sql
+MD
+README.md
+orders.service.ts
+1
+import
+{ db }
+from
+"./db"
+;
+2
+3
+export
+async
+function
+createOrder(input) {
+4
+const
+order =
+await
+db.order.create(input);
+5
+await
+notify(order.customer,
+"received"
+);
+6
+await
+stock.reserve(order.items);
+7
+return
+order;
+8
+}
+TERMINAL
+▶ Run the tests
+▌
+⎇ main
+○ running
+TypeScript
+02
+The Software Development
+Workflow.
+Discover
+Understand the work before any code
+$
+git init
+What we do
+Meet the people who will use it
+Map how the work is done today
+Agree what the software must achieve
+Software and tools
+Calls
+Process map
+Notes
+You get
+A one-page goal and a list of users
+03
+Custom Software.
+In 15 Days.
+Play the 15 days, or slide through them. Watch the work move across the board.
+₹
+40,000
+in just
+15 days
+▶ Play the 15 days
+Day
+7
+/ 15
+Build
+.
+The software is built in stages. You see a working demo every few days.
+To do
+4
+Reports and dashboard
+Test everything
+Go live
+Train your team
+In progress
+1
+Main screens
+In review
+1
+Login and roles
+Done
+2
+✓
+Agree the scope
+✓
+Design the screens
+Start your 15 days
+One clearly agreed scope, set on day 1. A bigger system is planned in stages.
+04
+The Software We Build With,
+in Zero Gravity.
+Gravity keeps the tools in orbit around your software. Switch it off, then drag, throw or push them. Click one to see what it is for.
+Your
+software
+VS Code
+Git
+GitHub
+React.js
+Next.js
+Node.js
+Python
+PostgreSQL
+MySQL
+MongoDB
+REST APIs
+GraphQL
+Docker
+AWS
+Figma
+Build and ship
+Git
+Saves every change, so any change can be reviewed or undone.
+Gravity on
+Zero gravity
+Shake
+05
+Where It Runs.
+On AWS.
+A typical setup. Click a part to see what it does. Change the number of visitors and watch the servers.
+Your application runs in containers. When more people arrive, more servers are added.
+Visitors
+Some
+Auto-scaling: on
+2
+servers
+·
+fast and calm
+06
+Build It,
+Piece by Piece.
+Pick a kind of software, then switch modules on. Your app takes shape.
+business software
+portals dashboards
+erp crm
+saas products
+workflow automation
+api integrations
+legacy upgrade
+support maintenance
+yourcompany.app
+Home
+Leads
+Sales
+Login and roles
+Good morning
+2
+modules
+switched on
+Leads
+Sales
+✓
+Leads
+✓
+Sales
++
+Operations
++
+Reports
+Systems that bring sales, operations and customers together.
+07
+Which Software,
+For Which Work.
+Choose your industry. See the work that the software does for it.
+Manufacturing
+Jewellery
+Textile
+Education
+Healthcare
+Logistics
+Real estate
+Startups
+Education
+:
+Student, fee, class and exam management with portals for teachers and parents.
+1
+Students
+2
+Fees
+3
+Classes
+4
+Exams
+5
+Portals
+Step
+1
+of
+5
+Students
+Admission and records of every student.
+08
+How a Change
+Ships.
+Add a bug and see the checks stop it. Fix it and ship.
+Pull request
+feature / orders-report
+Open
+Code is reviewed
+A second developer reads every change.
+Automatic tests pass
+The checks run on every change, not only before launch.
+Security checks pass
+Logins, roles and data handling are checked.
+You try the demo
+You see it working before it goes live.
+Deployed, then watched
+It goes live safely and we keep an eye on it.
+Add a bug
+Run the checks
+Merge and deploy
+09
+Questions,
+Answered.
+⌘ K
+What is custom software development?
+Why choose custom software instead of ready-made software?
+How long does it take to build custom software?
+Can you improve or replace our old software?
+Will the software work on mobile phones?
+Do you provide support after launch?
+Is my data safe?
+What is custom software development?
+It is software designed and built for one business, around its own process, instead of using a ready-made product that every company shares.
+↑
+↓
+to move · type to search
+10
+Ready To Build
+Your Software?
+Tell us how your team works today and where it slows down. We will suggest what to build and how to start.
+Get a free quote
+Let's talk
+Ready To Build
+Your Software?
+Tell us how your team works today and where it slows down. We will suggest what to build and how to start.
+Step
+1
+of 4
+What would you like to make?
+Pick as many as you like.
+Website
+Mobile app
+AI / chatbot
+VR / metaverse
+Brand design
+UI/UX design
+CRM / software
+Something else
+Skip
+Mission brief
+W3V ·
+000
+You want
+Pick on the left
+Start
+Not chosen yet
+Size
+Not chosen yet
+Launch readiness
+0
+%
+We read it before we call you, so we are ready.
+Surat (Head Office)
+We3vision House 1/936, Bhim Kachchhi Mohallo,
+Nanpura Surat, Gujarat, India, 395001
+info@we3vision.com
+Contact US
+hr@we3vision.com
++91 7383216096
++91 7600772240
+Germany
+Zum Lahnberg 64, Marburg, 35037
+germany@we3vision.com
++49 1516 2774145

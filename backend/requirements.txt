@@ -19,3 +19,15 @@ python-docx>=1.1,<2
 pytest
 python-multipart
 
+
+# Website ingestion feature
+requests>=2.32,<3
+beautifulsoup4>=4.12,<5
+google-genai>=1.0,<2
+
+# Optional JavaScript-rendered website extraction fallback
+playwright>=1.45,<2
+
+scrapy>=2.11,<3
+
+reportlab>=4.0,<5

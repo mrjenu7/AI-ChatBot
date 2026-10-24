@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import re
+import re
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,6 +32,10 @@ ALLOWED_EXTENSIONS = {".pdf", ".txt", ".doc", ".docx"}
 class DeleteResponse(BaseModel):
     message: str
     filename: str
+
+
+class AbstractApiKeyUpdate(BaseModel):
+    api_key: str
 
 
 def require_admin(authorization: str | None = Header(default=None)) -> None:
@@ -162,6 +167,49 @@ def _split_chunks(text: str, filename: str, digest: str) -> list[dict[str, Any]]
 
 def _manifest() -> list[dict[str, Any]]:
     return _read_json(MANIFEST_PATH, [])
+
+
+def _update_env_value(key: str, value: str) -> None:
+    env_path = BACKEND_DIR / ".env"
+    if not env_path.exists():
+        raise HTTPException(status_code=500, detail="Backend .env file was not found.")
+
+    try:
+        text = env_path.read_text(encoding="utf-8")
+        pattern = re.compile(rf"(?m)^{re.escape(key)}=.*$")
+        replacement = f"{key}={value}"
+        if pattern.search(text):
+            text = pattern.sub(replacement, text, count=1)
+        else:
+            if text and not text.endswith("\n"):
+                text += "\n"
+            text += replacement + "\n"
+
+        fd, tmp = tempfile.mkstemp(prefix=".env.", suffix=".tmp", dir=str(BACKEND_DIR))
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                stream.write(text)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(tmp, env_path)
+        finally:
+            if os.path.exists(tmp):
+                os.unlink(tmp)
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"Could not update backend .env: {exc}") from exc
+
+
+@router.put("/abstract-api-key", dependencies=[Depends(require_admin)])
+def update_abstract_api_key(payload: AbstractApiKeyUpdate) -> dict[str, str]:
+    api_key = payload.api_key.strip()
+    if not api_key:
+        raise HTTPException(status_code=400, detail="ABSTRACT_API key cannot be empty.")
+    if "\n" in api_key or "\r" in api_key:
+        raise HTTPException(status_code=400, detail="ABSTRACT_API key is invalid.")
+
+    _update_env_value("ABSTRACT_API", api_key)
+    os.environ["ABSTRACT_API"] = api_key
+    return {"message": "ABSTRACT_API updated in backend .env successfully."}
 
 
 @router.get("/health", dependencies=[Depends(require_admin)])

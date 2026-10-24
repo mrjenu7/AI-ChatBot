@@ -131,6 +131,21 @@ def test_out_of_scope_query_declined():
     assert "No matching records were found" in context or "strictly decline" in context
 
 
+@pytest.mark.parametrize("query", [
+    "How many services do you offer?",
+    "List all services",
+    "What is the total number of services?",
+    "What services does We3vision provide?",
+    "what are your services?",
+    "What services does We3vision provide? Can I get a free quote?",
+])
+def test_all_services_query_retrieves_complete_catalogue(query):
+    context = retrieve_relevant_context(query)
+    assert "Complete Services Catalogue Overview (40 Services)" in context
+    assert "provides 40 services across 7 categories" in context
+    assert "NFT Marketplace Development" in context
+
+
 def test_leadership_retrieval():
     context = retrieve_relevant_context("Who is the director of We3vision?")
     assert "Parth Patel" in context

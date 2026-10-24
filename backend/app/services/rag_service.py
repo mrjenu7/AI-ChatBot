@@ -1,4 +1,5 @@
 import json
+import ast
 import re
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -263,6 +264,48 @@ def _tokenize(text: str) -> List[str]:
     return re.findall(r'[\w\u0A80-\u0AFF\u0900-\u097F]+', (text or '').lower())
 
 
+def _service_catalogue_chunk(chunks: List[Dict]) -> Optional[Dict]:
+    """Return the canonical overview or synthesize it from service metadata."""
+    overview = next((chunk for chunk in chunks if chunk.get("id") == "core_services_overview"), None)
+    if overview:
+        return overview
+
+    # Parse the metadata literal without importing the builder, whose command
+    # line dependencies and generation side effects are not needed at runtime.
+    builder_path = Path(__file__).with_name("build_knowledge_base.py")
+    try:
+        builder_tree = ast.parse(builder_path.read_text(encoding="utf-8"))
+        service_metadata = next(
+            ast.literal_eval(node.value)
+            for node in builder_tree.body
+            if isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "SERVICE_METADATA_DEFS" for target in node.targets)
+        )
+    except (OSError, SyntaxError, ValueError, StopIteration):
+        return None
+
+    services = [
+        item for item in service_metadata
+        if isinstance(item, dict) and item.get("title") and item.get("category")
+    ]
+    if not services:
+        return None
+
+    categories: Dict[str, List[str]] = {}
+    for item in services:
+        categories.setdefault(str(item["category"]), []).append(str(item["title"]))
+    lines = [f"We3vision provides {len(services)} services across {len(categories)} categories:"]
+    for category, titles in categories.items():
+        lines.append(f"{category}: " + ", ".join(titles))
+    return {
+        "id": "core_services_overview",
+        "title": f"We3vision Complete Services Catalogue Overview ({len(services)} Services)",
+        "category": "Overview",
+        "keywords": ["all services", "total services", "what services", "service catalogue"],
+        "content": "\\n".join(lines),
+    }
+
+
 def _route_general_company_query(query: str, chunks: List[Dict]) -> List[Dict]:
     """Route broad company, contact, and careers questions to their source records."""
     text = (query or "").lower()
@@ -278,15 +321,13 @@ def _route_general_company_query(query: str, chunks: List[Dict]) -> List[Dict]:
         if result:
             return result
 
-    contact_terms = {"quote", "quotation", "contact", "email", "phone", "call", "urgent", "representative", "person", "saheb", "vaat"}
-    if words & contact_terms or "talk to someone" in text or "speak to someone" in text:
-        identity = by_id.get("company_identity_and_contact")
-        return [identity] if identity else []
-
     overview_phrases = (
         "what does we3vision do", "what does your company do", "what do you do",
         "main service", "primary service", "company shu kare", "company su kare",
         "shu kaam", "su kaam", "company vishe", "about we3vision", "about your company",
+        "what are your services", "what services do you provide", "what services does",
+        "what services do", "services does we3vision provide", "services does we3vision offer",
+        "what do you offer", "what does we3vision offer",
     )
     broad_company = any(phrase in text for phrase in overview_phrases)
     if broad_company:
@@ -294,8 +335,34 @@ def _route_general_company_query(query: str, chunks: List[Dict]) -> List[Dict]:
         for chunk_id in ("core_services_overview", "company_identity_and_contact"):
             if chunk_id in by_id:
                 result.append(by_id[chunk_id])
+        if not any(chunk.get("id") == "core_services_overview" for chunk in result):
+            overview = _service_catalogue_chunk(chunks)
+            if overview:
+                result.insert(0, overview)
         if result:
             return result
+
+    # Questions asking for the full catalogue or its count should use the
+    # canonical overview, rather than whichever single service scores highest.
+    service_terms = {"service", "services", "offering", "offerings", "seva", "sevao"}
+    all_terms = {"all", "total", "every", "list", "complete", "entire", "badhi", "badha", "tamam"}
+    count_terms = {"total", "count", "number", "how", "many", "ketli", "ketla", "ketli"}
+    asks_catalogue = bool(words & service_terms) and bool(words & (all_terms | count_terms))
+    if not asks_catalogue:
+        asks_catalogue = any(phrase in text for phrase in (
+            "all services", "total services", "list of services", "how many services",
+            "all offerings", "complete service list", "badhi services", "ketli services",
+            "what services", "your services", "services does we3vision provide",
+            "services does we3vision offer", "services do you provide",
+        ))
+    if asks_catalogue:
+        overview = _service_catalogue_chunk(chunks)
+        return [overview] if overview else []
+
+    contact_terms = {"quote", "quotation", "contact", "email", "phone", "call", "urgent", "representative", "person", "saheb", "vaat"}
+    if words & contact_terms or "talk to someone" in text or "speak to someone" in text:
+        identity = by_id.get("company_identity_and_contact")
+        return [identity] if identity else []
     return []
 
 
