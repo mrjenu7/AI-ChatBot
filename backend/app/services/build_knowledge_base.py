@@ -604,15 +604,29 @@ PDF_SERVICE_NAMES = {
 
 def extract_services_from_pdf(pdf_path: Path) -> Dict[int, str]:
     """
-    Extract exact text sections for each service 1..40 from the PDF.
+    Extract exact text sections for each service 1..40 from the PDF or embedded text.
     Uses clean regex heading boundary matching with exact service names.
     """
-    if not pdf_path.exists():
-        raise FileNotFoundError(f"PDF not found at {pdf_path}")
+    full_text = ""
+    if pdf_path and pdf_path.exists() and pypdf is not None:
+        try:
+            reader = pypdf.PdfReader(str(pdf_path))
+            pages_text = [p.extract_text() or "" for p in reader.pages]
+            candidate_text = "\n".join(pages_text)
+            if "1. Brand Identity Design" in candidate_text:
+                full_text = candidate_text
+        except Exception as e:
+            print(f"[WARN] Failed reading from PDF directly: {e}")
 
-    reader = pypdf.PdfReader(str(pdf_path))
-    pages_text = [p.extract_text() or "" for p in reader.pages]
-    full_text = "\n".join(pages_text)
+    if not full_text:
+        try:
+            from app.services.pdf_pages_1_to_60 import PAGES_1_TO_60
+            from app.services.pdf_pages_61_to_120 import PAGES_61_TO_120
+            from app.services.pdf_pages_121_to_179 import PAGES_121_TO_179
+            full_text = "\n".join(PAGES_1_TO_60 + PAGES_61_TO_120 + PAGES_121_TO_179)
+            print("[INFO] Using embedded verified OCR pages for 40 services extraction.")
+        except ImportError:
+            pass
 
     found_positions = []
     for num, name in PDF_SERVICE_NAMES.items():
@@ -620,7 +634,6 @@ def extract_services_from_pdf(pdf_path: Path) -> Dict[int, str]:
         regex = rf'(?m)^{num}\.\s+{escaped_name}'
         matches = list(re.finditer(regex, full_text))
         if matches:
-            # Pick the match in the document body (past page 6 table of contents)
             body_matches = [m for m in matches if m.start() > 5000]
             chosen = body_matches[0] if body_matches else matches[-1]
             found_positions.append((num, chosen.start()))
@@ -646,7 +659,7 @@ def extract_services_from_pdf(pdf_path: Path) -> Dict[int, str]:
 def build_knowledge_base():
     print(f"Reading from {PDF_PATH}...")
     service_texts = extract_services_from_pdf(PDF_PATH)
-    print(f"Extracted {len(service_texts)} service sections from PDF.")
+    print(f"Extracted {len(service_texts)} service sections.")
 
     # Canonical Company Identity Chunk
     company_chunk = {
@@ -681,13 +694,13 @@ def build_knowledge_base():
             "Offices & Locations:\n"
             "1. Head Office & Headquarters (Surat, India):\n"
             "   We3vision House, 1/936 A, Bhim Kachchhi Mohallo, Nanpura, Surat, Gujarat, India 395001.\n"
+            "   (Also registered office at: 204, SNS Arista, Vesu Main Road, Surat, Gujarat 395007 / 4/1399/B 1st Floor, Begampura Danapith, Surat 395003).\n"
             "2. Germany Office: Biegenstraße 18, 35037 Marburg, Germany.\n\n"
             "Leadership & Key Management:\n"
             "- Director & COO: Parth Patel\n"
-            "- Board of Directors: Mohit Patel, Vinod Patel\n"
+            "- Board of Directors: Vinod Patel\n"
             "- Founder & Managing Director (MD): Harsh Ramoliya\n"
             "- Board of Directors (BOD) & CFO: Vinod Patel\n"
-            "- Project Manager: Mohit Patel"
         )
     }
 
@@ -720,7 +733,7 @@ def build_knowledge_base():
         )
     }
 
-    # Core Overview Chunk
+    # Core Overview Chunk with explicit 40 services breakdown
     overview_chunk = {
         "id": "core_services_overview",
         "title": "We3Vision Complete Services Catalogue Overview (40 Services)",
@@ -729,31 +742,61 @@ def build_knowledge_base():
         "keywords": [
             "services", "what do you do", "offerings", "expertise", "portfolio",
             "web", "mobile", "ai", "metaverse", "ar", "vr", "3d", "gaming", "marketing", "erp", "crm",
-            "40 services", "design", "development",
-            "સેવાઓ", "શું કામ કરો છો", "ઓફરિંગ્સ",
-            "सेवाएं", "क्या सेवाएं प्रदान करते हैं", "ऑफरिंग्स"
+            "40 services", "design", "development", "how many services", "how many service", "total services",
+            "all services", "service list", "services list", "list of services", "ketli services", "ketla services",
+            "સેવાઓ", "શું કામ કરો છો", "ઓફરિંગ્સ", "કેટલી સર્વિસ", "તમામ સર્વિસ", "બધી સર્વિસ",
+            "सेवाएं", "क्या सेवाएं प्रदान करते हैं", "ऑफरिंग्स", "कितनी सर्विसेज"
         ],
         "content": (
-            "We3vision Private Limited provides 40 distinct services across 7 core categories:\n\n"
-            "1. Design & Creative: Brand Identity Design (/brand-identity), Graphic / UI-UX Design (/graphics), "
-            "2D & 3D Animation (/animation), CGI & Video Production (/cgi), 3D Modeling (/3d-modeling), "
-            "Website Redesign (/redesign, /website-redesign).\n"
-            "2. Web & Software Development: Web Development (/webdev), Mobile App Development (/mobile), "
-            "Software Development (/software), Custom Development (/custom-dev), Low-Code Development (/low-code), "
-            "SaaS Development (/Saas), Shopify Development (/shopify), WordPress Development (/wordpress), "
-            "Technology Migration (/tech-migration).\n"
-            "3. Enterprise Solutions: ERP Solutions (/erp-dev), ERP Development (/erp), CRM Development (/crm).\n"
-            "4. Marketing: Digital Marketing (/marketing), Search Engine Optimization SEO (/seo), "
-            "Immersive Marketing (/immersive-marketing).\n"
-            "5. AI & Machine Learning: AI Development (/ai), Generative AI (/generative-ai), AI Agents (/ai-agents), "
-            "Retrieval-Augmented Generation RAG AI (/rag-ai), Machine Learning (/machine-learning), "
-            "Computer Vision (/computer-vision), AI Automation (/ai-automation), MLOps (/mlops).\n"
-            "6. Immersive Technology: AR Development (/ar, /augmented-reality), VR Development (/vr), "
-            "Mixed Reality MR (/mr), Extended Reality XR (/xr), Metaverse Solutions (/metaverse), "
-            "Immersive Services (/serviceimmersive).\n"
-            "7. Games & Web3: Android Game Development (/android-games), iOS Game Development (/ios-games), "
-            "Metaverse Game Development (/metaverse-games), NFT Game Development (/nft-games), "
-            "NFT Marketplace Development (/nft-marketplace)."
+            "We3vision Private Limited provides exactly 40 distinct services across 7 core categories:\n\n"
+            "1. Design & Creative (6 Services):\n"
+            "- Brand Identity & Rebranding Services (/brand-identity)\n"
+            "- Graphics & UI/UX Design Services (/graphics)\n"
+            "- 2D & 3D Animation Services (/animation)\n"
+            "- CGI & Video Production Services (/cgi)\n"
+            "- 3D Modeling Services (/3d-modeling)\n"
+            "- Website Redesign Services (/redesign)\n\n"
+            "2. Web & Software Development (9 Services):\n"
+            "- Web Development Services (/webdev)\n"
+            "- Mobile App Development Services (/mobile)\n"
+            "- Custom Software Development Services (/software)\n"
+            "- Tailored Custom Development Services (/custom-dev)\n"
+            "- Low-Code Development Services (/low-code)\n"
+            "- SaaS Product Development Services (/Saas)\n"
+            "- Shopify eCommerce Development Services (/shopify)\n"
+            "- WordPress & CMS Development Services (/wordpress)\n"
+            "- Technology Migration Services (/tech-migration)\n\n"
+            "3. Enterprise Solutions (3 Services):\n"
+            "- Enterprise ERP Solutions (/erp-dev)\n"
+            "- Custom ERP Development Services (/erp)\n"
+            "- CRM Development Services (/crm)\n\n"
+            "4. Marketing (3 Services):\n"
+            "- Digital Marketing Services (/marketing)\n"
+            "- Search Engine Optimization (SEO) Services (/seo)\n"
+            "- Immersive Marketing Services (/immersive-marketing)\n\n"
+            "5. AI & Machine Learning (8 Services):\n"
+            "- Custom AI Development Services (/ai)\n"
+            "- Generative AI Development Services (/generative-ai)\n"
+            "- AI Agents Development Services (/ai-agents)\n"
+            "- Retrieval-Augmented Generation (RAG AI) Services (/rag-ai)\n"
+            "- Machine Learning (ML) Solutions (/machine-learning)\n"
+            "- Computer Vision Services (/computer-vision)\n"
+            "- AI Automation & Workflow Services (/ai-automation)\n"
+            "- MLOps & AI Infrastructure Services (/mlops)\n\n"
+            "6. Immersive Technology (6 Services):\n"
+            "- AR (Augmented Reality) Development Services (/ar)\n"
+            "- VR (Virtual Reality) Development Services (/vr)\n"
+            "- MR (Mixed Reality) Solutions (/mr)\n"
+            "- XR (Extended Reality) Solutions (/xr)\n"
+            "- Metaverse Solutions & Virtual Worlds (/metaverse)\n"
+            "- Immersive Technology Services (Overview) (/serviceimmersive)\n\n"
+            "7. Games & Web3 (5 Services):\n"
+            "- Android Game Development Services (/android-games)\n"
+            "- iOS Game Development Services (/ios-games)\n"
+            "- Metaverse Games Development (/metaverse-games)\n"
+            "- NFT Game Development (/nft-games)\n"
+            "- NFT Marketplace Development (/nft-marketplace)\n\n"
+            "Total Services Count: Exactly 40 services organized across 7 core domains."
         )
     }
 
@@ -806,6 +849,18 @@ def build_knowledge_base():
         })
 
     chunks.append(portfolio_chunk)
+
+    # If crawler website snapshot chunks exist, also preserve them under category 'Website Knowledge'
+    crawler_snapshot = DATA_DIR / "we3vision_knowledge_base.json.crawler_snapshot"
+    if crawler_snapshot.exists():
+        try:
+            snapshot_chunks = json.loads(crawler_snapshot.read_text(encoding="utf-8"))
+            if isinstance(snapshot_chunks, list):
+                website_chunks = [c for c in snapshot_chunks if c.get("category") == "Website Knowledge"]
+                chunks.extend(website_chunks)
+                print(f"[INFO] Appended {len(website_chunks)} website knowledge chunks for contextual RAG.")
+        except Exception as e:
+            print(f"[WARN] Could not load crawler snapshot chunks: {e}")
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with open(JSON_OUTPUT_PATH, "w", encoding="utf-8") as f:

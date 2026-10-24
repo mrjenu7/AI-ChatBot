@@ -127,8 +127,17 @@ def approve_latest_extraction(payload: dict):
                 shutil.copy2(original, backup_dir / (original.name + '.before_website_approval'))
         tmp_pdf = active_pdf.with_name('.approved_knowledge.tmp.pdf')
         shutil.copy2(source_pdf, tmp_pdf)
+        existing_chunks = []
+        if KNOWLEDGE_PATH.exists():
+            try:
+                existing_chunks = json.loads(KNOWLEDGE_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                existing_chunks = []
+        # Preserve core 40 services, corporate, overview chunks
+        core_chunks = [c for c in existing_chunks if c.get("category") != "Website Knowledge"]
+        combined_chunks = (core_chunks if core_chunks else existing_chunks) + chunks
         try:
-            _atomic_json_write(KNOWLEDGE_PATH, chunks)
+            _atomic_json_write(KNOWLEDGE_PATH, combined_chunks)
             os.replace(tmp_pdf, active_pdf)
             reload_knowledge_base()
         except Exception as exc:

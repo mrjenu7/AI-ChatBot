@@ -81,15 +81,16 @@ MAIN_SERVICE_PAGE_BY_CATEGORY = {
 def get_service_options() -> List[Dict[str, str]]:
     """Build selectable service options directly from the loaded knowledge base."""
     options: List[Dict[str, str]] = []
+    seen_ids = set()
     for chunk in load_knowledge_chunks():
         category = str(chunk.get("category", "")).strip()
         title = str(chunk.get("title", "")).strip()
         service_id = str(chunk.get("id", "")).strip()
-        if not service_id or not title or not category:
+        if not service_id or not title or not category or service_id in seen_ids:
             continue
-        # Admin uploads are searchable knowledge for chat, but they are not
+        # Admin uploads and website crawl chunks are searchable knowledge for chat, but they are not
         # selectable public services in the website's service picker.
-        if category in {"Corporate", "Overview", "Careers", "Portfolio", "Admin Uploaded Document"}:
+        if category in {"Corporate", "Overview", "Careers", "Portfolio", "Admin Uploaded Document", "Website Knowledge"}:
             continue
         if "overview" in title.lower():
             continue
@@ -97,6 +98,7 @@ def get_service_options() -> List[Dict[str, str]]:
         if not service_url:
             service_url = MAIN_SERVICE_PAGE_BY_CATEGORY.get(category, "")
         options.append({"id": service_id, "title": title, "category": category, "url": service_url})
+        seen_ids.add(service_id)
     return options
 
 
@@ -344,16 +346,17 @@ def _route_general_company_query(query: str, chunks: List[Dict]) -> List[Dict]:
 
     # Questions asking for the full catalogue or its count should use the
     # canonical overview, rather than whichever single service scores highest.
-    service_terms = {"service", "services", "offering", "offerings", "seva", "sevao"}
-    all_terms = {"all", "total", "every", "list", "complete", "entire", "badhi", "badha", "tamam"}
-    count_terms = {"total", "count", "number", "how", "many", "ketli", "ketla", "ketli"}
+    service_terms = {"service", "services", "offering", "offerings", "seva", "sevao", "domain", "domains"}
+    all_terms = {"all", "total", "every", "list", "complete", "entire", "badhi", "badha", "tamam", "tamame", "full"}
+    count_terms = {"total", "count", "number", "how", "many", "ketli", "ketla", "ketlu", "kitni", "kitne"}
     asks_catalogue = bool(words & service_terms) and bool(words & (all_terms | count_terms))
     if not asks_catalogue:
         asks_catalogue = any(phrase in text for phrase in (
-            "all services", "total services", "list of services", "how many services",
-            "all offerings", "complete service list", "badhi services", "ketli services",
-            "what services", "your services", "services does we3vision provide",
-            "services does we3vision offer", "services do you provide",
+            "all services", "total services", "list of services", "how many services", "how many service",
+            "all offerings", "complete service list", "badhi services", "ketli services", "ketla services",
+            "what services", "your services", "services does we3vision provide", "services list", "service list",
+            "services does we3vision offer", "services do you provide", "tell me about services", "show services",
+            "services vishe", "40 services", "services details", "which services", "kahi services", "what are your services"
         ))
     if asks_catalogue:
         overview = _service_catalogue_chunk(chunks)
@@ -450,7 +453,12 @@ def retrieve_relevant_context(
     # For broad company intents, use canonical records instead of whichever
     # service page happens to share generic words with the query.
     routed_chunks = _route_general_company_query(query, chunks)
-    if selected_service:
+
+    # When the user asks about the full catalogue or total service count (e.g. "how many services?"),
+    # ALWAYS provide the complete 40 services catalogue overview, even if a service was focused in the UI.
+    if routed_chunks and any(chunk.get("id") == "core_services_overview" for chunk in routed_chunks):
+        selected_chunks = routed_chunks
+    elif selected_service:
         selected_chunk = next((chunk for chunk in chunks if chunk.get("id") == selected_service["id"]), None)
         selected_chunks = [selected_chunk] if selected_chunk else []
     elif service_intent_chunks:

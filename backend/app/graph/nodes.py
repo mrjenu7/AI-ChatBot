@@ -232,7 +232,7 @@ async def _repair_language(
             model=settings.llm_model,
             messages=repair_messages,
             temperature=0.2,
-            max_tokens=min(settings.llm_max_tokens, 300),
+            max_tokens=min(settings.llm_max_tokens, 1000),
         )
     )
 
@@ -295,7 +295,8 @@ async def generate_response_node(
         "Use this retrieved text as the only source for company-specific facts. Keep claims attached to their service; do not infer capabilities from examples or industry descriptions. "
         "If a requested detail is missing, conflicting, or marked unverified, say it needs confirmation. Do not invent or promise features, results, prices, timelines, quotes, availability, or callbacks. "
         "The selected service only focuses retrieval; it is not evidence by itself. For unrelated requests, politely decline and stay focused on We3vision. "
-        "Answer the user's question directly in 2-4 concise sentences, ask at most one useful follow-up question, and use plain English text without Markdown."
+        "Answer the user's question directly and thoroughly with clear structure. For catalogue, list, or service overview questions, provide the complete breakdown across all 7 categories and 40 services. "
+        "Ask at most one useful follow-up question, and use clean plain text formatting."
     )
 
     full_messages = [
@@ -319,7 +320,7 @@ async def generate_response_node(
             model=settings.llm_model,
             messages=full_messages,
             temperature=settings.llm_temperature,
-            max_tokens=min(settings.llm_max_tokens, 300),
+            max_tokens=min(settings.llm_max_tokens, 1000),
         )
 
         reply = (

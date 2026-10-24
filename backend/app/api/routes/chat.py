@@ -132,7 +132,7 @@ def _stream_system_prompt(
         f"{selected_service_instruction}"
         "Use retrieved text as the only source for company facts. Keep claims attached to their service; examples do not prove every feature is offered. "
         "If a detail is missing or marked unverified, say it needs confirmation. Do not invent capabilities, results, prices, timelines, or commitments. "
-        "Decline unrelated requests. Answer directly in 2-4 concise sentences, ask at most one useful follow-up, and use plain text without Markdown."
+        "Decline unrelated requests. Answer directly, thoroughly, and with clear structure. For catalogue or listing inquiries, provide the complete breakdown across all 7 categories and 40 services. Ask at most one useful follow-up, and use clean formatting."
     )
 
 async def _history_messages(
@@ -206,7 +206,7 @@ async def _openai_text_stream(
         model=settings.llm_model,
         messages=messages,
         temperature=settings.llm_temperature,
-        max_tokens=min(settings.llm_max_tokens, 300),
+        max_tokens=min(settings.llm_max_tokens, 1000),
         stream=True,
     )
 
