@@ -12,6 +12,7 @@ from app.services.language_service import (
 )
 from app.services.company_guard import classify_scope, refusal, clarification
 from app.services.llm_service import _get_client
+from app.services.markdown_format import FORMAT_RULES, normalize_markdown
 from app.services.rag_service import (
     build_grounded_fallback_reply,
     get_service_option,
@@ -296,7 +297,8 @@ async def generate_response_node(
         "If a requested detail is missing, conflicting, or marked unverified, say it needs confirmation. Do not invent or promise features, results, prices, timelines, quotes, availability, or callbacks. "
         "The selected service only focuses retrieval; it is not evidence by itself. For unrelated requests, politely decline and stay focused on We3vision. "
         "Answer the user's question directly and thoroughly with clear structure. For catalogue, list, or service overview questions, provide the complete breakdown across all 7 categories and 40 services. "
-        "Ask at most one useful follow-up question, and use clean plain text formatting."
+        "Ask at most one useful follow-up question.\n\n"
+        f"{FORMAT_RULES}"
     )
 
     full_messages = [
@@ -320,7 +322,7 @@ async def generate_response_node(
             model=settings.llm_model,
             messages=full_messages,
             temperature=settings.llm_temperature,
-            max_tokens=min(settings.llm_max_tokens, 1000),
+            max_tokens=min(settings.llm_max_tokens, 2500),
         )
 
         reply = (
@@ -367,7 +369,7 @@ async def generate_response_node(
         reply = build_grounded_fallback_reply(user_message, rag_context)
 
     return {
-        "reply": reply
+        "reply": normalize_markdown(reply)
     }
 
 

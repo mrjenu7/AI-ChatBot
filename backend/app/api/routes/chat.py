@@ -23,6 +23,7 @@ from app.services.language_service import (
 )
 from app.services.company_guard import classify_scope, refusal, clarification
 from app.services.llm_service import _get_client
+from app.services.markdown_format import FORMAT_RULES, normalize_markdown
 from app.services.rag_service import (
     get_service_links_from_context,
     get_service_option,
@@ -126,7 +127,8 @@ def _stream_system_prompt(
         f"{selected_service_instruction}"
         "Use retrieved text as the only source for company facts. Keep claims attached to their service; examples do not prove every feature is offered. "
         "If a detail is missing or marked unverified, say it needs confirmation. Do not invent capabilities, results, prices, timelines, or commitments. "
-        "Decline unrelated requests. Answer directly, thoroughly, and with clear structure. For catalogue or listing inquiries, provide the complete breakdown across all 7 categories and 40 services. Ask at most one useful follow-up, and use clean formatting."
+        "Decline unrelated requests. Answer directly, thoroughly, and with clear structure. For catalogue or listing inquiries, provide the complete breakdown across all 7 categories and 40 services. Ask at most one useful follow-up.\n\n"
+        f"{FORMAT_RULES}"
     )
 
 async def _history_messages(
@@ -200,7 +202,7 @@ async def _openai_text_stream(
         model=settings.llm_model,
         messages=messages,
         temperature=settings.llm_temperature,
-        max_tokens=min(settings.llm_max_tokens, 1000),
+        max_tokens=min(settings.llm_max_tokens, 2500),
         stream=True,
     )
 
@@ -782,7 +784,7 @@ async def chat_stream(request: ChatRequest):
                 )
 
             full_reply = "".join(full_reply_parts).strip()
-            full_reply = _clean_chat_response(full_reply)
+            full_reply = normalize_markdown(full_reply)
 
             lead = None
             suggestions: List[str] = []
