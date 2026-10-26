@@ -132,7 +132,7 @@ def _stream_system_prompt(
         f"{selected_service_instruction}"
         "Use retrieved text as the only source for company facts. Keep claims attached to their service; examples do not prove every feature is offered. "
         "If a detail is missing or marked unverified, say it needs confirmation. Do not invent capabilities, results, prices, timelines, or commitments. "
-        "Decline unrelated requests. Answer directly, thoroughly, and with clear structure. For catalogue or listing inquiries, provide the complete breakdown across all 7 categories and 40 services. Ask at most one useful follow-up, and use clean formatting."
+        "Decline unrelated requests. Answer directly, thoroughly, and with clear structure. For catalogue or listing inquiries, provide the complete breakdown across all 7 categories and 40 services. Ask at most one useful follow-up. Use plain text only: do not output Markdown markers such as **, *, #, backticks, or Markdown headings. For office-address questions, state only these two official locations: Surat head office: We3vision House, 1/936 A, Bhim Kachchhi Mohallo, Nanpura, Surat, Gujarat, India 395001; Germany office: Zum Lahnberg 64, Marburg, 35037, Germany. Do not mention other Surat addresses."
     )
 
 async def _history_messages(
@@ -774,21 +774,23 @@ async def chat_stream(request: ChatRequest):
                 messages,
                 language,
             ):
+                # Buffer provider chunks so Markdown symbols split across chunks
+                # cannot leak into the UI. Send one cleaned delta after completion.
                 full_reply_parts.append(delta)
 
+            full_reply = "".join(full_reply_parts).strip()
+            full_reply = _clean_chat_response(full_reply)
+            if full_reply:
                 yield (
                     json.dumps(
                         {
                             "type": "delta",
-                            "text": delta,
+                            "text": full_reply,
                         },
                         ensure_ascii=False,
                     )
                     + "\n"
                 )
-
-            full_reply = "".join(full_reply_parts).strip()
-            full_reply = _clean_chat_response(full_reply)
 
             lead = None
             suggestions: List[str] = []
