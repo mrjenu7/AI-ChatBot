@@ -304,7 +304,7 @@ def _service_catalogue_chunk(chunks: List[Dict]) -> Optional[Dict]:
         "title": f"We3vision Complete Services Catalogue Overview ({len(services)} Services)",
         "category": "Overview",
         "keywords": ["all services", "total services", "what services", "service catalogue"],
-        "content": "\\n".join(lines),
+        "content": "\n".join(lines),
     }
 
 
