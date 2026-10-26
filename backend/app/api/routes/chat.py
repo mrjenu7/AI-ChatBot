@@ -597,7 +597,7 @@ async def chat(request: ChatRequest):
     final_state = await chat_graph.ainvoke(initial_state)
 
     return ChatResponse(
-        reply=final_state.get("reply", ""),
+        reply=normalize_markdown(final_state.get("reply", "")),
         session_id=session_id,
         language="en",
         locale="en-IN",
