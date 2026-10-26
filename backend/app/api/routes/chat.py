@@ -2,7 +2,7 @@ import asyncio
 import json
 import re
 from typing import AsyncIterator, Dict, List, Optional
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5, NAMESPACE_DNS
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -68,10 +68,7 @@ def _clean_message(request: ChatRequest) -> tuple[str, str, str, Optional[str]]:
         try:
             user_id = str(UUID(user_id))
         except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail="user_id must be a valid UUID",
-            )
+            user_id = str(uuid5(NAMESPACE_DNS, user_id))
 
     if not session_id:
         session_id = str(uuid4())
@@ -79,10 +76,7 @@ def _clean_message(request: ChatRequest) -> tuple[str, str, str, Optional[str]]:
         try:
             session_id = str(UUID(session_id))
         except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail="session_id must be a valid UUID",
-            )
+            session_id = str(uuid5(NAMESPACE_DNS, session_id))
 
     selected_service_id = (request.selected_service_id or "").strip() or None
     if selected_service_id and not get_service_option(selected_service_id):
@@ -132,7 +126,7 @@ def _stream_system_prompt(
         f"{selected_service_instruction}"
         "Use retrieved text as the only source for company facts. Keep claims attached to their service; examples do not prove every feature is offered. "
         "If a detail is missing or marked unverified, say it needs confirmation. Do not invent capabilities, results, prices, timelines, or commitments. "
-        "Decline unrelated requests. Answer directly, thoroughly, and with clear structure. For catalogue or listing inquiries, provide the complete breakdown across all 7 categories and 40 services. Ask at most one useful follow-up. Use plain text only: do not output Markdown markers such as **, *, #, backticks, or Markdown headings. For office-address questions, state only these two official locations: Surat head office: We3vision House, 1/936 A, Bhim Kachchhi Mohallo, Nanpura, Surat, Gujarat, India 395001; Germany office: Zum Lahnberg 64, Marburg, 35037, Germany. Do not mention other Surat addresses."
+        "Decline unrelated requests. Answer directly, thoroughly, and with clear structure. For catalogue or listing inquiries, provide the complete breakdown across all 7 categories and 40 services. Ask at most one useful follow-up, and use clean formatting."
     )
 
 async def _history_messages(
@@ -774,23 +768,21 @@ async def chat_stream(request: ChatRequest):
                 messages,
                 language,
             ):
-                # Buffer provider chunks so Markdown symbols split across chunks
-                # cannot leak into the UI. Send one cleaned delta after completion.
                 full_reply_parts.append(delta)
 
-            full_reply = "".join(full_reply_parts).strip()
-            full_reply = _clean_chat_response(full_reply)
-            if full_reply:
                 yield (
                     json.dumps(
                         {
                             "type": "delta",
-                            "text": full_reply,
+                            "text": delta,
                         },
                         ensure_ascii=False,
                     )
                     + "\n"
                 )
+
+            full_reply = "".join(full_reply_parts).strip()
+            full_reply = _clean_chat_response(full_reply)
 
             lead = None
             suggestions: List[str] = []
