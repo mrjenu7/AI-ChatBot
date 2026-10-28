@@ -7,17 +7,18 @@ import os
 import shutil
 import subprocess
 import re
-import re
 import tempfile
+from time import monotonic
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
 from app.services.rag_service import reload_knowledge_base
 from app.core.config import settings
+from app.services.admin_auth import issue_token, verify_password, verify_token, supabase_admin_client
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 BACKEND_DIR = Path(__file__).resolve().parents[3]
@@ -27,6 +28,9 @@ KNOWLEDGE_PATH = DATA_DIR / "we3vision_knowledge_base.json"
 MANIFEST_PATH = DATA_DIR / "admin_documents.json"
 MAX_FILE_BYTES = 15 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".pdf", ".txt", ".doc", ".docx"}
+_LOGIN_FAILURES: dict[str, list[float]] = {}
+_LOGIN_LOCK_SECONDS = 15 * 60
+_LOGIN_MAX_FAILURES = 5
 
 
 class DeleteResponse(BaseModel):
@@ -38,15 +42,56 @@ class AbstractApiKeyUpdate(BaseModel):
     api_key: str
 
 
-def require_admin(authorization: str | None = Header(default=None)) -> None:
-    expected = settings.admin_api_token.strip()
-    if not expected:
-        raise HTTPException(status_code=503, detail="Admin panel is not configured. Set ADMIN_API_TOKEN on the backend.")
+class AdminLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+def require_admin(authorization: str | None = Header(default=None)) -> dict[str, str]:
     supplied = (authorization or "").removeprefix("Bearer ").strip()
-    # Compare without leaking whether a partial token matched.
-    import hmac
-    if not supplied or not hmac.compare_digest(supplied, expected):
-        raise HTTPException(status_code=401, detail="Invalid admin token.")
+    admin = verify_token(supplied) if supplied else None
+    if not admin:
+        raise HTTPException(status_code=401, detail="Admin login is required or the session has expired.")
+    return admin
+
+
+def _login_is_limited(key: str) -> bool:
+    now = monotonic()
+    failures = [stamp for stamp in _LOGIN_FAILURES.get(key, []) if now - stamp < _LOGIN_LOCK_SECONDS]
+    _LOGIN_FAILURES[key] = failures
+    return len(failures) >= _LOGIN_MAX_FAILURES
+
+
+@router.post("/auth/login")
+def admin_login(payload: AdminLoginRequest, request: Request) -> dict[str, Any]:
+    email = payload.email.strip().lower()
+    if len(email) > 254 or len(payload.password) > 1024:
+        raise HTTPException(status_code=401, detail="Email or password is incorrect.")
+    client_host = request.client.host if request.client else "unknown"
+    limit_key = client_host
+    if _login_is_limited(limit_key):
+        raise HTTPException(status_code=429, detail="Too many login attempts. Try again in 15 minutes.")
+    try:
+        response = (
+            supabase_admin_client().table("admin_users")
+            .select("id,email,password_hash,is_active")
+            .eq("email", email)
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        print(f"[Admin Login DB Error]: {type(exc).__name__}")
+        raise HTTPException(status_code=503, detail="Admin login is temporarily unavailable.") from exc
+    admin = next((row for row in (response.data or []) if row.get("is_active") is True), None)
+    if not admin or not verify_password(payload.password, str(admin.get("password_hash", ""))):
+        _LOGIN_FAILURES.setdefault(limit_key, []).append(monotonic())
+        raise HTTPException(status_code=401, detail="Email or password is incorrect.")
+    _LOGIN_FAILURES.pop(limit_key, None)
+    try:
+        token, expires_in = issue_token(admin)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="Admin authentication is not configured on the backend.") from exc
+    return {"access_token": token, "token_type": "bearer", "expires_in": expires_in, "admin": {"email": email}}
 
 
 def _read_json(path: Path, default: Any) -> Any:

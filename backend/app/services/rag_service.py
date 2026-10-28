@@ -109,16 +109,37 @@ def get_service_option(service_id: Optional[str]) -> Optional[Dict[str, str]]:
 
 
 def get_service_links_from_context(context: str, limit: int = 3) -> List[Dict[str, str]]:
-    """Resolve retrieved service headings to safe relative website links."""
+    """Resolve retrieved service records or catalogue entries to relative links."""
     by_title = {option["title"]: option for option in get_service_options()}
     links: List[Dict[str, str]] = []
-    for title in re.findall(r"^###\s+(.+?)\s*$", context or "", flags=re.MULTILINE):
-        option = by_title.get(title.strip())
+    seen_urls = set()
+    headings = re.findall(r"^###\s+(.+?)\s*$", context or "", flags=re.MULTILINE)
+    for heading in headings:
+        option = by_title.get(heading.strip())
         if not option or not option.get("url"):
             continue
+        if option["url"] in seen_urls:
+            continue
         links.append({"title": option["title"], "url": option["url"]})
+        seen_urls.add(option["url"])
         if len(links) >= limit:
             break
+
+    # The full catalogue is a single Overview record, so extract the listed
+    # service names and map them to their canonical site routes here.
+    if not links and any("services catalogue overview" in title.lower() for title in headings):
+        content = context or ""
+        for line in content.splitlines():
+            match = re.match(r"^\s*-\s+(.+?)\s*(?:\(/[^)]*\))?\s*$", line)
+            if not match:
+                continue
+            option = by_title.get(match.group(1).strip())
+            if not option or not option.get("url") or option["url"] in seen_urls:
+                continue
+            links.append({"title": option["title"], "url": option["url"]})
+            seen_urls.add(option["url"])
+            if len(links) >= limit:
+                break
     return links
 
 

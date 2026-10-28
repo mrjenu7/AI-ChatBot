@@ -24,6 +24,8 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:4174",
         "http://127.0.0.1:4174",
+        "http://localhost:1010",
+        "http://127.0.0.1:1010",
         *[origin.strip() for origin in settings.admin_panel_origins.split(",") if origin.strip()],
     ],
     allow_credentials=True,

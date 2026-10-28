@@ -1,0 +1,329 @@
+{
+  "job_id": "8c9a0782f46e4116ae6892acf8960d26",
+  "root_url": "https://we3vision.com/",
+  "started_at": "2026-10-28T05:39:04.835591+00:00",
+  "status": "failed",
+  "discovered_urls": 60,
+  "processed_pages": 60,
+  "processed_documents": 0,
+  "failed_urls": [],
+  "pages": [
+    {
+      "url": "https://we3vision.com/",
+      "title": "We3vision | Web, AI & Metaverse Development Company, India",
+      "content_hash": "a637043d8e7f2c767fd66a3c290699074ab5af34ee1c0b711deb90904c671282"
+    },
+    {
+      "url": "https://we3vision.com/contact",
+      "title": "Contact We3vision | Surat, India & Marburg, Germany",
+      "content_hash": "2dff2849218cf0b83b8a7aca097f20dfc7c0477cf9550d415792fa867bff8111"
+    },
+    {
+      "url": "https://we3vision.com/portfolio",
+      "title": "Portfolio | Our Work | We3vision",
+      "content_hash": "2afc1fdf67ddfcd8003fc225d70c81ad5b29f64587019bfce83fd1f9dc3f6cef"
+    },
+    {
+      "url": "https://we3vision.com/brand-identity",
+      "title": "Brand Identity Design Services in Surat, India | We3vision",
+      "content_hash": "45550666571af3895d707f10b042823a9129d982b0e693d38be047629e4af96a"
+    },
+    {
+      "url": "https://we3vision.com/webdev",
+      "title": "Web Development Company in Surat, India | We3vision",
+      "content_hash": "cc27b12476cfd6d6d1bde9a458a31518c49cfbcda8f47efea8841f0060aa6e71"
+    },
+    {
+      "url": "https://we3vision.com/mobile",
+      "title": "Mobile App Development Company in Surat | We3vision",
+      "content_hash": "654d31fe6284ccecf5cd9f5e10afee3e76a05ba19ec0a5ac21d7c43f3b3bfebe"
+    },
+    {
+      "url": "https://we3vision.com/ai",
+      "title": "AI Development Company in India | We3vision",
+      "content_hash": "d9888d7a8665f021cd9877051992422ba938822c58aa479673b7b6f73c92d306"
+    },
+    {
+      "url": "https://we3vision.com/metaverse",
+      "title": "Metaverse Development Company in India | We3vision",
+      "content_hash": "1201562e2ee90c575548d9a24f607b564694f73f76426ca74e529453f192fef5"
+    },
+    {
+      "url": "https://we3vision.com/ui-ux-design",
+      "title": "UI/UX Design Services in Surat, India | We3vision",
+      "content_hash": "dd51f2e3d0cd150fb5da6e9c69ec8f6c182565acf908c4ccf14e4bd9ad7b66dd"
+    },
+    {
+      "url": "https://we3vision.com/crm",
+      "title": "Custom CRM Development Company in India | We3vision",
+      "content_hash": "e41fa978e14b7b6adc8fdf5143063e8a1174b508356146a0f96fc73131fa2974"
+    },
+    {
+      "url": "https://we3vision.com/animation",
+      "title": "2D & 3D Animation Services in India | We3vision",
+      "content_hash": "e4a85267f1c05ef0b262e143d9fd209830294ffc5b919ad33968ce0f9690b9df"
+    },
+    {
+      "url": "https://we3vision.com/3d-modeling",
+      "title": "3D Modeling Services in India | We3vision",
+      "content_hash": "2110e64aa4d197eb79a990308e40f8b19b84a70e86e1a88523a84cb48e0dec34"
+    },
+    {
+      "url": "https://we3vision.com/graphics",
+      "title": "Graphic Design Company in Surat, India | We3vision",
+      "content_hash": "125b3405c17ffd473521f16cb11caf766b325a1ac03f0af848ee09fa498285d9"
+    },
+    {
+      "url": "https://we3vision.com/seo",
+      "title": "SEO & AEO Services | Search Visibility | We3vision",
+      "content_hash": "6227f056ba6c0d1448e15d282781c7431f0a0c390dd68a19ff9a75251b4a02b1"
+    },
+    {
+      "url": "https://we3vision.com/headless-CMS-devlopment-services",
+      "title": "Headless CMS Development Services | We3vision",
+      "content_hash": "0747473f0571231175a8fba2891cfb7e8ecf6898a3423a3b98da5bfb948fcbe1"
+    },
+    {
+      "url": "https://we3vision.com/custom-wordpress-devlopment-services",
+      "title": "Custom WordPress Development Services | We3vision",
+      "content_hash": "ca6351c1d291f001454a334e3794e6b7e0c6403106a6e9267746bc8f6d46bd04"
+    },
+    {
+      "url": "https://we3vision.com/shopify-development-services",
+      "title": "Shopify Development Services | Custom Stores | We3vision",
+      "content_hash": "2c59b897585d2a5199bb62289f5721ac1a48efd4c8ff88587a6c844dec9fd24b"
+    },
+    {
+      "url": "https://we3vision.com/custom-woocommerce-devlopment",
+      "title": "Custom WooCommerce Development Services | We3vision",
+      "content_hash": "7a6a0dcdf90ccacb6045cd3a2b67608361546b14f25e5a0a25129a4eca8191da"
+    },
+    {
+      "url": "https://we3vision.com/shopify-app-development-services",
+      "title": "Shopify App Development Services | We3vision",
+      "content_hash": "0058d6d7908d9e0f755e9896942a9db22f0266c345dd6d666129f8cadd177bf6"
+    },
+    {
+      "url": "https://we3vision.com/wordpress-plugin-development-company",
+      "title": "WordPress Plugin Development Company | We3vision",
+      "content_hash": "c13ecefdc63fe937ec288b35faa4a4bc4fa347a35dd6ecdbe7a3e4cd8184ff60"
+    },
+    {
+      "url": "https://we3vision.com/blog",
+      "title": "Blog | Web, AI, Design & Digital Insights | We3vision",
+      "content_hash": "64dfb3bc44526dcb395d27fd65845e8501521c8405877dd14bdcd63a615c135b"
+    },
+    {
+      "url": "https://we3vision.com/about",
+      "title": "About We3vision | IT Company in Surat, India Since 2019",
+      "content_hash": "66ed5bb8b7bbba792d64a47a761f09425b4c432752b3b43443c19d00cdde476d"
+    },
+    {
+      "url": "https://we3vision.com/team",
+      "title": "Our Team | The People Behind We3vision | Surat, India",
+      "content_hash": "b3e65282ef6883cc75af2d23c362af70be8adcb93a274b88c0714f86237ff42f"
+    },
+    {
+      "url": "https://we3vision.com/careers",
+      "title": "Careers at We3vision | Join Our Team in Surat, India",
+      "content_hash": "b086da30032db17581bbcf8a4516d869741eaa825d7fe10607d5b440a2b616a5"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/the-beer-beauty",
+      "title": "The Beer Beauty | Portfolio | We3vision",
+      "content_hash": "96775f8f5f055734f3bbe8d9e93610688a4e47d0638e72c9fe7cef683f08a016"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/seeksu-jewels",
+      "title": "Seeksu Jewels | Portfolio | We3vision",
+      "content_hash": "abc2074341258e7cd16023790fa5ef5896fcd61651f14e2650b888838ba4c5e7"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/aarushi-developers",
+      "title": "Aarushi Developers | Portfolio | We3vision",
+      "content_hash": "109a9655c52e2d095baf6dbb74ee070c2f1b13cc58bb33dc4e2c4331702e6c49"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/colgate",
+      "title": "Colgate | Portfolio | We3vision",
+      "content_hash": "6d72056ab2463c14131ab5a44e0b687aafe5cf9a26c0b61f1cec17f04b4849e8"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/cosimo",
+      "title": "Cosimo | Portfolio | We3vision",
+      "content_hash": "d3c1a5958d9c3ffd1ad3c22f2f87aea12e94549c2979f5c1b8a25fc44e25fb98"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/palmolive",
+      "title": "Palmolive | Portfolio | We3vision",
+      "content_hash": "afeeea61343ef5326df0521f86f94f925682aa6ff3244258ff9291994ec3563b"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/buyuns-24",
+      "title": "Buyuns 24 | Portfolio | We3vision",
+      "content_hash": "a45da3e884beebc60ff83bdfcd0de8b33700148f65f827111ad3e7b0319aa88a"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/donut",
+      "title": "Donut | Portfolio | We3vision",
+      "content_hash": "36b81a232ed497302ca6d84e41e2b033b802f65e17021dcc221da9f28a55ca5c"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/epic",
+      "title": "Epic | Portfolio | We3vision",
+      "content_hash": "b0e52c617499cec2484f492423861faed8e62afc7c67e553ffdfdbdb4829822a"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/good-dollar",
+      "title": "Good DOllar | Portfolio | We3vision",
+      "content_hash": "403a72c57586c7a53beb378ac8137ecea18f557b447aad264219a2b9f1ee33e3"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/loopify",
+      "title": "Loopify | Portfolio | We3vision",
+      "content_hash": "c78f2fd22032f88d945d42c3df81a4ca00b099948014a545ed3a0af0f89d7e35"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/shiv-sati-collection",
+      "title": "Shiv Sati Collection | Portfolio | We3vision",
+      "content_hash": "b78ecc1aca71defaeaa606058d64328de4f6c30e215eaa3776ae3c1fb7af160d"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/snap-sound",
+      "title": "Snap Sound | Portfolio | We3vision",
+      "content_hash": "69187901056fa4f01f79842b3f364548a02c761cb2af7944cc247743303a241e"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/tony-kus",
+      "title": "Tony Kus | Portfolio | We3vision",
+      "content_hash": "80e598d322886de24c42790f8c09ce6e4f7c42ed27eb77f0c89d2d33689967af"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/triller",
+      "title": "Triller | Portfolio | We3vision",
+      "content_hash": "8984768b7daf5236156ae686b9b3a8ed96a0d4a2e147387202a119399c3c1dae"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/web-engage",
+      "title": "Web Engage | Portfolio | We3vision",
+      "content_hash": "7262b9f5b8b5b4c495ebb0d2ef19bd146629585769adf5f5122f99ddc00866c2"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/berocca",
+      "title": "Berocca | Portfolio | We3vision",
+      "content_hash": "081cec3722d93caed2c8dc2e3f586cfede8f1437ed13468e1dde94bcdc28f197"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/the-ledge",
+      "title": "The Ledge | Portfolio | We3vision",
+      "content_hash": "fc90a29bdcb2950537551292f5fa1c6c6ce2e7fcdc6058fe6eb819972edad893"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/t-shirt-design",
+      "title": "T-Shirt Design | Portfolio | We3vision",
+      "content_hash": "1c4c0d28674d9fad323124ca6a7fdb5c00137937e541c9baf51f5c7e999af668"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/oh-tea",
+      "title": "OH Tea | Portfolio | We3vision",
+      "content_hash": "656f45d883c1bc00d537d6818d6b6a1c2538b8c3e83e27c3a85b56dd6fe950b3"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/carousel-1",
+      "title": "Carousel 1 | Portfolio | We3vision",
+      "content_hash": "48046d05c5f2692114fa9934c6b492b987fdc5a8e6d1f81ea433d183aaebcf29"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/carousel-2",
+      "title": "Carousel 2 | Portfolio | We3vision",
+      "content_hash": "2159c103820d58cdf6280e995f085ff3d6634e806f37b461734410fd13771a37"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/carousel-3",
+      "title": "Carousel 3 | Portfolio | We3vision",
+      "content_hash": "01e2b69676b5aaae7853d584d85a786ccddd1d58e76749602017f0b71e2749e8"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/jai-jalaram",
+      "title": "Jai Jalaram | Portfolio | We3vision",
+      "content_hash": "572dd80936640715c6f9093b03cd11f8a49419266797dae527a7ff953ce2d0f2"
+    },
+    {
+      "url": "https://we3vision.com/portfolio/sisara-international",
+      "title": "SISARA INTERNATIONAL | Portfolio | We3vision",
+      "content_hash": "fae789f273bc5623c7f6fc91de7600c08a49e6f2edb39fa30654cd66db922e64"
+    },
+    {
+      "url": "https://we3vision.com/brand-kit-design",
+      "title": "Brand Kit Design Services in Surat, India | We3vision",
+      "content_hash": "4bd53647176bdcaa44506db099848fc25b52e7db922565fd8cf568c7f427751d"
+    },
+    {
+      "url": "https://we3vision.com/blog/ai-agents-for-business-what-they-are-and-where-they-save-time",
+      "title": "AI Agents for Business: What They Are and Where They Save Time",
+      "content_hash": "df10465d67c07fa642b714d7156374287280df6cafc668e054a3f7df47e62ce7"
+    },
+    {
+      "url": "https://we3vision.com/blog/native-vs-cross-platform-apps-flutter-react-native-or-swift-kotlin",
+      "title": "Native vs Cross-Platform Apps: Flutter, React Native or Swift/Kotlin?",
+      "content_hash": "6a8972dadc62ab5c9413ea465cb297096c39cd9e937198488ba71ceac7bee4a2"
+    },
+    {
+      "url": "https://we3vision.com/blog/crm-for-small-business-how-to-choose-and-set-it-up",
+      "title": "CRM for Small Business: How to Choose and Set It Up",
+      "content_hash": "9ebf63262f27ec733edf06dcdf35c4a8b07c073820e7498d0f0aafe5784f7be4"
+    },
+    {
+      "url": "https://we3vision.com/blog/graphic-design-for-business-social-media-print-and-brand-assets",
+      "title": "Graphic Design for Business: Social Media, Print and Brand Assets",
+      "content_hash": "94e418add0b154c419cdbe36f1d6813a5373c5f9541de9d5f7974c853f3c2ad4"
+    },
+    {
+      "url": "https://we3vision.com/blog/how-to-build-a-custom-ai-chatbot-for-your-website-step-by-step",
+      "title": "How to Build a Custom AI Chatbot for Your Website, Step by Step",
+      "content_hash": "e98db5a1b50ded40ab77b5e2dcc647a41bf2ee88fce384c47185030655ec984e"
+    },
+    {
+      "url": "https://we3vision.com/blog/mobile-app-development-process-from-idea-to-app-store",
+      "title": "Mobile App Development Process: From Idea to App Store",
+      "content_hash": "e2e424f74c633da9b7d4b62944f60cfb9bf5b73bc059539c24b74e94304baf85"
+    },
+    {
+      "url": "https://we3vision.com/blog/custom-crm-vs-ready-made-crm-which-pays-off",
+      "title": "Custom CRM vs Ready-Made CRM: Which Pays Off? | We3vision",
+      "content_hash": "f50d191c0057610826a5c561af85c0e2bbecd7b7a5398fc5b783439723ecd79d"
+    },
+    {
+      "url": "https://we3vision.com/blog/how-to-build-a-brand-identity-logo-colours-and-voice",
+      "title": "How to Build a Brand Identity: Logo, Colours and Voice",
+      "content_hash": "7b83d6acc30bf6fe47f89e2ea041485582d03f7385691db51e18b11bec0aff0b"
+    },
+    {
+      "url": "https://we3vision.com/blog/rag-explained-let-ai-answer-from-your-own-documents",
+      "title": "RAG Explained: Let AI Answer From Your Own Documents",
+      "content_hash": "5763fff9eed4d1b8e6f3eed27630257ac8d14a7d4e6e6e5d4b99e4aac5ae6209"
+    },
+    {
+      "url": "https://we3vision.com/blog/ui-ux-design-principles-that-turn-visitors-into-customers",
+      "title": "UI/UX Design Principles That Turn Visitors Into Customers",
+      "content_hash": "7c20e8d63774568a91eaf9811d26584d8ff5165d66f681238270c785522c2e99"
+    }
+  ],
+  "finished_at": "2026-10-28T05:40:55.013278+00:00",
+  "api_key_issue": false,
+  "elapsed_seconds": 106.2,
+  "output_files": {
+    "master_json": "data\\website_knowledge\\crawl_dp8r6wg_\\website_knowledge.json",
+    "pages_json": "data\\website_knowledge\\crawl_dp8r6wg_\\pages.json",
+    "documents_json": "data\\website_knowledge\\crawl_dp8r6wg_\\documents.json",
+    "txt_directory": "data\\website_knowledge\\crawl_dp8r6wg_\\txt",
+    "txt_manifest": "data\\website_knowledge\\crawl_dp8r6wg_\\txt_manifest.json",
+    "crawl_report": "data\\website_knowledge\\crawl_dp8r6wg_\\crawl_report.json"
+  },
+  "pdf_ready": true,
+  "pdf_url": "/api/admin/website-ingestion/8c9a0782f46e4116ae6892acf8960d26/pdf",
+  "pdf_download_url": "/api/admin/website-ingestion/8c9a0782f46e4116ae6892acf8960d26/pdf?download=true",
+  "approved": false,
+  "rag_chunks_added": 0,
+  "error": "[WinError 5] Access is denied: 'C:\\\\we3vision\\\\We3vision-year-07-main\\\\AI-ChatBot\\\\backend\\\\data\\\\website_knowledge\\\\crawl_dp8r6wg_' -> 'C:\\\\we3vision\\\\We3vision-year-07-main\\\\AI-ChatBot\\\\backend\\\\data\\\\website_knowledge\\\\latest'"
+}

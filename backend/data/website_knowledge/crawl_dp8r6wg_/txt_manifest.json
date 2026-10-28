@@ -1,0 +1,302 @@
+[
+  {
+    "url": "https://we3vision.com/",
+    "file": "txt/page_0001_homepage.txt",
+    "characters": 7994
+  },
+  {
+    "url": "https://we3vision.com/contact",
+    "file": "txt/page_0002_contact.txt",
+    "characters": 1171
+  },
+  {
+    "url": "https://we3vision.com/portfolio",
+    "file": "txt/page_0003_portfolio.txt",
+    "characters": 4885
+  },
+  {
+    "url": "https://we3vision.com/brand-identity",
+    "file": "txt/page_0004_brand-identity.txt",
+    "characters": 14394
+  },
+  {
+    "url": "https://we3vision.com/webdev",
+    "file": "txt/page_0005_webdev.txt",
+    "characters": 9767
+  },
+  {
+    "url": "https://we3vision.com/mobile",
+    "file": "txt/page_0006_mobile.txt",
+    "characters": 9282
+  },
+  {
+    "url": "https://we3vision.com/ai",
+    "file": "txt/page_0007_ai.txt",
+    "characters": 10537
+  },
+  {
+    "url": "https://we3vision.com/metaverse",
+    "file": "txt/page_0008_metaverse.txt",
+    "characters": 16139
+  },
+  {
+    "url": "https://we3vision.com/ui-ux-design",
+    "file": "txt/page_0009_ui-ux-design.txt",
+    "characters": 8825
+  },
+  {
+    "url": "https://we3vision.com/crm",
+    "file": "txt/page_0010_crm.txt",
+    "characters": 6784
+  },
+  {
+    "url": "https://we3vision.com/animation",
+    "file": "txt/page_0011_animation.txt",
+    "characters": 7940
+  },
+  {
+    "url": "https://we3vision.com/3d-modeling",
+    "file": "txt/page_0012_3d-modeling.txt",
+    "characters": 8738
+  },
+  {
+    "url": "https://we3vision.com/graphics",
+    "file": "txt/page_0013_graphics.txt",
+    "characters": 9556
+  },
+  {
+    "url": "https://we3vision.com/seo",
+    "file": "txt/page_0014_seo.txt",
+    "characters": 12038
+  },
+  {
+    "url": "https://we3vision.com/headless-CMS-devlopment-services",
+    "file": "txt/page_0015_headless-CMS-devlopment-services.txt",
+    "characters": 1564
+  },
+  {
+    "url": "https://we3vision.com/custom-wordpress-devlopment-services",
+    "file": "txt/page_0016_custom-wordpress-devlopment-services.txt",
+    "characters": 5522
+  },
+  {
+    "url": "https://we3vision.com/shopify-development-services",
+    "file": "txt/page_0017_shopify-development-services.txt",
+    "characters": 4782
+  },
+  {
+    "url": "https://we3vision.com/custom-woocommerce-devlopment",
+    "file": "txt/page_0018_custom-woocommerce-devlopment.txt",
+    "characters": 1421
+  },
+  {
+    "url": "https://we3vision.com/shopify-app-development-services",
+    "file": "txt/page_0019_shopify-app-development-services.txt",
+    "characters": 1477
+  },
+  {
+    "url": "https://we3vision.com/wordpress-plugin-development-company",
+    "file": "txt/page_0020_wordpress-plugin-development-company.txt",
+    "characters": 1562
+  },
+  {
+    "url": "https://we3vision.com/blog",
+    "file": "txt/page_0021_blog.txt",
+    "characters": 4096
+  },
+  {
+    "url": "https://we3vision.com/about",
+    "file": "txt/page_0022_about.txt",
+    "characters": 5201
+  },
+  {
+    "url": "https://we3vision.com/team",
+    "file": "txt/page_0023_team.txt",
+    "characters": 8041
+  },
+  {
+    "url": "https://we3vision.com/careers",
+    "file": "txt/page_0024_careers.txt",
+    "characters": 3926
+  },
+  {
+    "url": "https://we3vision.com/portfolio/the-beer-beauty",
+    "file": "txt/page_0025_portfolio_the-beer-beauty.txt",
+    "characters": 919
+  },
+  {
+    "url": "https://we3vision.com/portfolio/seeksu-jewels",
+    "file": "txt/page_0026_portfolio_seeksu-jewels.txt",
+    "characters": 882
+  },
+  {
+    "url": "https://we3vision.com/portfolio/aarushi-developers",
+    "file": "txt/page_0027_portfolio_aarushi-developers.txt",
+    "characters": 877
+  },
+  {
+    "url": "https://we3vision.com/portfolio/colgate",
+    "file": "txt/page_0028_portfolio_colgate.txt",
+    "characters": 849
+  },
+  {
+    "url": "https://we3vision.com/portfolio/cosimo",
+    "file": "txt/page_0029_portfolio_cosimo.txt",
+    "characters": 845
+  },
+  {
+    "url": "https://we3vision.com/portfolio/palmolive",
+    "file": "txt/page_0030_portfolio_palmolive.txt",
+    "characters": 842
+  },
+  {
+    "url": "https://we3vision.com/portfolio/buyuns-24",
+    "file": "txt/page_0031_portfolio_buyuns-24.txt",
+    "characters": 848
+  },
+  {
+    "url": "https://we3vision.com/portfolio/donut",
+    "file": "txt/page_0032_portfolio_donut.txt",
+    "characters": 846
+  },
+  {
+    "url": "https://we3vision.com/portfolio/epic",
+    "file": "txt/page_0033_portfolio_epic.txt",
+    "characters": 862
+  },
+  {
+    "url": "https://we3vision.com/portfolio/good-dollar",
+    "file": "txt/page_0034_portfolio_good-dollar.txt",
+    "characters": 879
+  },
+  {
+    "url": "https://we3vision.com/portfolio/loopify",
+    "file": "txt/page_0035_portfolio_loopify.txt",
+    "characters": 876
+  },
+  {
+    "url": "https://we3vision.com/portfolio/shiv-sati-collection",
+    "file": "txt/page_0036_portfolio_shiv-sati-collection.txt",
+    "characters": 893
+  },
+  {
+    "url": "https://we3vision.com/portfolio/snap-sound",
+    "file": "txt/page_0037_portfolio_snap-sound.txt",
+    "characters": 883
+  },
+  {
+    "url": "https://we3vision.com/portfolio/tony-kus",
+    "file": "txt/page_0038_portfolio_tony-kus.txt",
+    "characters": 878
+  },
+  {
+    "url": "https://we3vision.com/portfolio/triller",
+    "file": "txt/page_0039_portfolio_triller.txt",
+    "characters": 883
+  },
+  {
+    "url": "https://we3vision.com/portfolio/web-engage",
+    "file": "txt/page_0040_portfolio_web-engage.txt",
+    "characters": 871
+  },
+  {
+    "url": "https://we3vision.com/portfolio/berocca",
+    "file": "txt/page_0041_portfolio_berocca.txt",
+    "characters": 861
+  },
+  {
+    "url": "https://we3vision.com/portfolio/the-ledge",
+    "file": "txt/page_0042_portfolio_the-ledge.txt",
+    "characters": 859
+  },
+  {
+    "url": "https://we3vision.com/portfolio/t-shirt-design",
+    "file": "txt/page_0043_portfolio_t-shirt-design.txt",
+    "characters": 855
+  },
+  {
+    "url": "https://we3vision.com/portfolio/oh-tea",
+    "file": "txt/page_0044_portfolio_oh-tea.txt",
+    "characters": 851
+  },
+  {
+    "url": "https://we3vision.com/portfolio/carousel-1",
+    "file": "txt/page_0045_portfolio_carousel-1.txt",
+    "characters": 885
+  },
+  {
+    "url": "https://we3vision.com/portfolio/carousel-2",
+    "file": "txt/page_0046_portfolio_carousel-2.txt",
+    "characters": 885
+  },
+  {
+    "url": "https://we3vision.com/portfolio/carousel-3",
+    "file": "txt/page_0047_portfolio_carousel-3.txt",
+    "characters": 885
+  },
+  {
+    "url": "https://we3vision.com/portfolio/jai-jalaram",
+    "file": "txt/page_0048_portfolio_jai-jalaram.txt",
+    "characters": 882
+  },
+  {
+    "url": "https://we3vision.com/portfolio/sisara-international",
+    "file": "txt/page_0049_portfolio_sisara-international.txt",
+    "characters": 880
+  },
+  {
+    "url": "https://we3vision.com/brand-kit-design",
+    "file": "txt/page_0050_brand-kit-design.txt",
+    "characters": 4838
+  },
+  {
+    "url": "https://we3vision.com/blog/ai-agents-for-business-what-they-are-and-where-they-save-time",
+    "file": "txt/page_0051_blog_ai-agents-for-business-what-they-are-and-where-they-save-time.txt",
+    "characters": 3937
+  },
+  {
+    "url": "https://we3vision.com/blog/native-vs-cross-platform-apps-flutter-react-native-or-swift-kotlin",
+    "file": "txt/page_0052_blog_native-vs-cross-platform-apps-flutter-react-native-or-swift-kotli.txt",
+    "characters": 3586
+  },
+  {
+    "url": "https://we3vision.com/blog/crm-for-small-business-how-to-choose-and-set-it-up",
+    "file": "txt/page_0053_blog_crm-for-small-business-how-to-choose-and-set-it-up.txt",
+    "characters": 3231
+  },
+  {
+    "url": "https://we3vision.com/blog/graphic-design-for-business-social-media-print-and-brand-assets",
+    "file": "txt/page_0054_blog_graphic-design-for-business-social-media-print-and-brand-assets.txt",
+    "characters": 3185
+  },
+  {
+    "url": "https://we3vision.com/blog/how-to-build-a-custom-ai-chatbot-for-your-website-step-by-step",
+    "file": "txt/page_0055_blog_how-to-build-a-custom-ai-chatbot-for-your-website-step-by-step.txt",
+    "characters": 3743
+  },
+  {
+    "url": "https://we3vision.com/blog/mobile-app-development-process-from-idea-to-app-store",
+    "file": "txt/page_0056_blog_mobile-app-development-process-from-idea-to-app-store.txt",
+    "characters": 3265
+  },
+  {
+    "url": "https://we3vision.com/blog/custom-crm-vs-ready-made-crm-which-pays-off",
+    "file": "txt/page_0057_blog_custom-crm-vs-ready-made-crm-which-pays-off.txt",
+    "characters": 3072
+  },
+  {
+    "url": "https://we3vision.com/blog/how-to-build-a-brand-identity-logo-colours-and-voice",
+    "file": "txt/page_0058_blog_how-to-build-a-brand-identity-logo-colours-and-voice.txt",
+    "characters": 3214
+  },
+  {
+    "url": "https://we3vision.com/blog/rag-explained-let-ai-answer-from-your-own-documents",
+    "file": "txt/page_0059_blog_rag-explained-let-ai-answer-from-your-own-documents.txt",
+    "characters": 3804
+  },
+  {
+    "url": "https://we3vision.com/blog/ui-ux-design-principles-that-turn-visitors-into-customers",
+    "file": "txt/page_0060_blog_ui-ux-design-principles-that-turn-visitors-into-customers.txt",
+    "characters": 3414
+  }
+]

@@ -50,6 +50,11 @@ class ChatResponse(BaseModel):
     service_links: List[Dict[str, str]] = Field(default_factory=list)
 
 
+def _strip_inline_service_routes(text: str) -> str:
+    """Keep service routes in the structured link field, not in answer prose."""
+    return re.sub(r"\s*\(/[a-z0-9_/-]+\)", "", text or "", flags=re.IGNORECASE)
+
+
 @router.get("/chat/services")
 async def chat_services():
     """Expose available chatbot service filters from the knowledge base."""
@@ -597,7 +602,7 @@ async def chat(request: ChatRequest):
     final_state = await chat_graph.ainvoke(initial_state)
 
     return ChatResponse(
-        reply=normalize_markdown(final_state.get("reply", "")),
+        reply=_strip_inline_service_routes(normalize_markdown(final_state.get("reply", ""))),
         session_id=session_id,
         language="en",
         locale="en-IN",

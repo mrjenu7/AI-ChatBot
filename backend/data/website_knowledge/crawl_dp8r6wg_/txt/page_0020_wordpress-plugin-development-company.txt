@@ -1,0 +1,105 @@
+SOURCE URL: https://we3vision.com/wordpress-plugin-development-company
+TITLE: WordPress Plugin Development Company | We3vision
+
+my-custom-plugin · editor
+01
+plugin.php
+02
+README.md
+03
+plugin-directory/
+04
+git log
+05
+badges.md
+06
+readme.txt
+07
+related-plugins/
+WordPress Plugins
+WordPress Plugin
+Development Services
+Need a custom solution to elevate your WordPress website? We build plugins that extend what your site can do.
+Get a free quote
+What we build
+my-custom-plugin
+EXPLORER
+▾ my-custom-plugin
+plugin.php
+includes/shortcode.php
+FEATURES
+Custom post type
+Shortcode
+Settings page
+REST endpoint
+Admin notice
+plugin.php
+<?php
+/**
+ * Plugin Name: My Custom Plugin
+ * Description: A plugin built around your needs.
+ * Version: 1.0.0
+ * Author: We3vision
+ */
+defined
+(
+'ABSPATH'
+) ||
+exit
+;
+require_once
+__DIR__ .
+'/includes/shortcode.php'
+;
+Plugins
+Activate
+Dashboard
+Posts
+Settings
+Sample page
+[we3_hello]
+Press Activate to see what the features do.
+↻ Watch the guide do it
+Let's talk
+Ready For A
+Custom Plugin?
+Describe the feature you are missing and we will tell you how we would build it.
+Step
+1
+of 4
+What would you like to make?
+Pick as many as you like.
+Website
+Mobile app
+AI / chatbot
+VR / metaverse
+Brand design
+UI/UX design
+CRM / software
+Something else
+Skip
+Mission brief
+W3V ·
+000
+You want
+Pick on the left
+Start
+Not chosen yet
+Size
+Not chosen yet
+Launch readiness
+0
+%
+We read it before we call you, so we are ready.
+Surat (Head Office)
+We3vision House 1/936, Bhim Kachchhi Mohallo,
+Nanpura Surat, Gujarat, India, 395001
+info@we3vision.com
+Contact US
+hr@we3vision.com
++91 7383216096
++91 7600772240
+Germany
+Zum Lahnberg 64, Marburg, 35037
+germany@we3vision.com
++49 1516 2774145
